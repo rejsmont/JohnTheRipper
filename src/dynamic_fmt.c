@@ -92,6 +92,8 @@ static int m_ompt;
 #include "timer.h"
 #endif
 
+#include "memdbg.h"
+
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
 

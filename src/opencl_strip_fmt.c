@@ -18,6 +18,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include "memdbg.h"
 
 #define FORMAT_LABEL		"strip-opencl"
 #define FORMAT_NAME		"STRIP Password Manager PBKDF2-SHA1"

@@ -20,6 +20,7 @@
 #define OMP_SCALE			2048
 #include <omp.h>
 #endif
+#include "memdbg.h"
 
 #define FORMAT_LABEL		"raw-keccak"
 #define FORMAT_NAME		"Keccak 512"

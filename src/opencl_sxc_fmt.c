@@ -20,6 +20,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include "memdbg.h"
 
 #define FORMAT_LABEL		"sxc-opencl"
 #define FORMAT_NAME		"StarOffice SXC SHA-1 Blowfish"

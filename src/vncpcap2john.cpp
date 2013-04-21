@@ -41,6 +41,7 @@
 #include <netinet/tcp.h>
 #include "tcphdr.h"
 #include <pcap.h>
+#include "memdbg.h"
 
 using namespace std;
 

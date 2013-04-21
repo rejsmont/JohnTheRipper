@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "common.h"
 #include "johnswap.h"
+#include "memdbg.h"
 
 unsigned int mem_saving_level = 0;
 
@@ -26,10 +27,15 @@ struct rm_list
 static struct rm_list *mem_alloc_tiny_memory;
 
 static void add_memory_link(void *v) {
-	struct rm_list *p = mem_alloc(sizeof(struct rm_list));
+	struct rm_list *p = (struct rm_list *)mem_alloc(sizeof(struct rm_list));
 	p->next = mem_alloc_tiny_memory;
 	p->mem = v;
 	mem_alloc_tiny_memory = p;
+	// mark these as 'tiny' memory, so that memory snapshot checking does not
+	// flag these as leaks.  At program exit, this memory will still get checked,
+	// but it should be freed, so will still be globally checked for leaks.
+	MEMDBG_tag_mem_from_alloc_tiny(v);
+	MEMDBG_tag_mem_from_alloc_tiny((void*)p);
 }
 // call at program exit.
 void cleanup_tiny_memory()
@@ -45,13 +51,21 @@ void cleanup_tiny_memory()
 	}
 }
 
-void *mem_alloc(size_t size)
+void *mem_alloc_func(size_t size
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+	)
 {
 	void *res;
 
 	if (!size) return NULL;
-
-	if (!(res = malloc(size))) {
+#if defined (MEMDBG_ON)
+	res = (char*) MEMDBG_alloc(size, file, line);
+#else
+	res = malloc(size);
+#endif
+	if (!res) {
 		fprintf(stderr, "mem_alloc(): %s trying to allocate %zd bytes\n", strerror(ENOMEM), size);
 		error();
 	}
@@ -59,9 +73,17 @@ void *mem_alloc(size_t size)
 	return res;
 }
 
-void *mem_calloc(size_t size)
+void *mem_calloc_func(size_t size
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+	)
 {
+#if defined (MEMDBG_ON)
+	char *res = (char*) MEMDBG_alloc(size, file, line);
+#else
 	char *res = (char*) mem_alloc(size);
+#endif
 	memset(res, 0, size);
 	return res;
 }
@@ -75,7 +97,11 @@ void *mem_calloc(size_t size)
 #undef  MEM_ALLOC_SIZE
 #define MEM_ALLOC_SIZE 0
 #endif
-void *mem_alloc_tiny(size_t size, size_t align)
+void *mem_alloc_tiny_func(size_t size, size_t align
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+)
 {
 	static char *buffer = NULL;
 	static size_t bufree = 0;
@@ -106,13 +132,20 @@ void *mem_alloc_tiny(size_t size, size_t align)
 		if (size + mask > MEM_ALLOC_SIZE ||
 		    bufree > MEM_ALLOC_MAX_WASTE)
 			break;
-
-		buffer = mem_alloc(MEM_ALLOC_SIZE);
+#if defined (MEMDBG_ON)
+		buffer = (char*)mem_alloc_func(MEM_ALLOC_SIZE, file, line);
+#else
+		buffer = (char*)mem_alloc(MEM_ALLOC_SIZE);
+#endif
 		add_memory_link((void*)buffer);
 		bufree = MEM_ALLOC_SIZE;
 	} while (1);
 
-	p = mem_alloc(size + mask);
+#if defined (MEMDBG_ON)
+	p = (char*)mem_alloc_func(size + mask, file, line);
+#else
+	p = (char*)mem_alloc(size + mask);
+#endif
 	add_memory_link((void*)p);
 	p += mask;
 	p -= (size_t)p & mask;

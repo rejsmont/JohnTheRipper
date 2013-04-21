@@ -20,7 +20,7 @@
 
 #pragma GCC optimize 3
 
-#include <stdint.h>
+#include "stdint.h"
 #include <string.h>
 #include <emmintrin.h>
 
@@ -32,7 +32,8 @@
 
 #include "common.h"
 #include "formats.h"
-
+#include "johnswap.h"
+#include "memdbg.h"
 
 #if defined __XOP__
 #define SIMD_TYPE                 "XOP"

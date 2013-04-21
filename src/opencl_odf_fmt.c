@@ -19,6 +19,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include "memdbg.h"
 
 #define FORMAT_LABEL		"odf-opencl"
 #define FORMAT_NAME		"ODF SHA-1 Blowfish"
