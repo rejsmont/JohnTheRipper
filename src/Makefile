@@ -46,10 +46,10 @@ NSS_LDFLAGS = `pkg-config 2>/dev/null --libs nss`
 # Try to auto-detect GMP and KRB5 libs. The grep is needed in case some of the
 # paths does not exist, because find will return false even though finding a
 # file. If these hacks do not work, comment them out and see next sections.
-HAVE_GMP = `find 2>&1 /usr/include /usr/local/include /opt/local/include -name "gmp.h" | grep -q "gmp.h" && echo -DHAVE_GMP`
-GMP_LDFLAGS = `find 2>&1 /usr/include /usr/local/include /opt/local/include -name "gmp.h" | grep -q "gmp.h" && echo -lgmp`
-HAVE_KRB5 = `find 2>&1 /usr/include/ /usr/local/include/ /opt/local/include -name "krb5.h" | grep -q "krb5.h" && echo -DHAVE_KRB5`
-KRB5_LDFLAGS = `find 2>&1 /usr/include/ /usr/local/include/ /opt/local/include -name "krb5.h" | grep -q "krb5.h" && echo -lk5crypto -lkrb5`
+HAVE_GMP = `find 2>&1 /usr/include /usr/local/include -name "gmp.h" | grep -q "gmp.h" && echo -DHAVE_GMP`
+GMP_LDFLAGS = `find 2>&1 /usr/include /usr/local/include -name "gmp.h" | grep -q "gmp.h" && echo -lgmp`
+HAVE_KRB5 = `find 2>&1 /usr/include/ /usr/local/include/ -name "krb5.h" | grep -q "krb5.h" && echo -DHAVE_KRB5`
+KRB5_LDFLAGS = `find 2>&1 /usr/include/ /usr/local/include/ -name "krb5.h" | grep -q "krb5.h" && echo -lk5crypto -lkrb5`
 
 # Uncomment the below if you have GMP library installed (faster wowsrp format)
 # in case the auto-detection does not work.
@@ -630,7 +630,7 @@ linux-x86-gpu:
 	$(LN) x86-sse.h arch.h
 	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
 	$(MAKE) $(PROJ) \
-		JOHN_OBJS="$(JOHN_OBJS) $(OCL_OBJS) $(CUDA_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics-32.o" \
+		JOHN_OBJS="$(JOHN_OBJS) $(OCL_OBJS) $(CUDA_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
 		CFLAGS="$(CFLAGS) -I$(OCLROOT)/include -I$(CUDAPATH)/include -DHAVE_CRYPT -DHAVE_OPENCL -DHAVE_CUDA -DHAVE_DL -DUSING_ICC_S_FILE -march=native" \
 		ASFLAGS="$(ASFLAGS) -march=native" \
 		LDFLAGS="$(LDFLAGS) -L$(OCLROOT)/lib/x86 -L$(OCLROOT)/lib -L$(CUDAPATH)/lib -lcrypt -lOpenCL -ldl -lcudart -march=native"
@@ -646,7 +646,7 @@ linux-x86-opencl:
 	$(LN) x86-sse.h arch.h
 	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
 	$(MAKE) $(PROJ) \
-		JOHN_OBJS="$(JOHN_OBJS) $(OCL_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics-32.o" \
+		JOHN_OBJS="$(JOHN_OBJS) $(OCL_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
 		CFLAGS="$(CFLAGS) -I$(OCLROOT)/include -DHAVE_CRYPT -DHAVE_OPENCL -DHAVE_DL -DUSING_ICC_S_FILE -march=native" \
 		ASFLAGS="$(ASFLAGS) -march=native" \
 		LDFLAGS="$(LDFLAGS) -L$(OCLROOT)/lib/x86 -L$(OCLROOT)/lib -lcrypt -lOpenCL -ldl -march=native"
@@ -662,7 +662,7 @@ linux-x86-cuda:
 	$(LN) x86-sse.h arch.h
 	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
 	$(MAKE) $(PROJ) \
-		JOHN_OBJS="$(JOHN_OBJS) $(CUDA_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics-32.o" \
+		JOHN_OBJS="$(JOHN_OBJS) $(CUDA_OBJS) c3_fmt.o x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
 		CFLAGS="$(CFLAGS) -I$(CUDAPATH)/include -DHAVE_CRYPT -DHAVE_DL -DHAVE_CUDA -DUSING_ICC_S_FILE -march=native" \
 		ASFLAGS="$(ASFLAGS) -march=native" \
 		LDFLAGS="$(LDFLAGS) -L$(CUDAPATH)/lib -lcrypt -ldl -lcudart -march=native"
@@ -1223,7 +1223,7 @@ solaris-x86-sse2-cc:
 	$(MAKE) $(PROJ) \
 		JOHN_OBJS="$(JOHN_OBJS) c3_fmt.o solaris-x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o" \
 		CC=cc \
-		CFLAGS="-c -fast -xarch=native -DHAVE_CRYPT $(OMPFLAGS)" \
+		CFLAGS="-c -fast -xarch=native -DHAVE_CRYPT $(OMPFLAGS) -DJOHN_DISABLE_INTRINSICS" \
 		ASFLAGS="-c -xarch=native $(OMPFLAGS) $(JOHN_ASFLAGS)" \
 		LDFLAGS="-s -xarch=native $(OMPFLAGS) $(LDFLAGS_SOLARIS) $(JOHN_LDFLAGS)" \
 		OPT_NORMAL="" \
