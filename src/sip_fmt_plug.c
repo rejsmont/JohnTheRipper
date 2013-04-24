@@ -26,10 +26,6 @@ static int omp_t = 1;
 #endif
 #include "memdbg.h"
 
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
-
 typedef struct sip_salt_t {
 	int static_hash_data_len, dynamic_hash_data_len;
 	char *static_hash_data, *dynamic_hash_data;

@@ -30,10 +30,6 @@ static int omp_t = 1;
 #include "options.h"
 #include "memdbg.h"
 
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
-
 #define FORMAT_LABEL            "postgres"
 #define FORMAT_NAME             "PostgreSQL MD5 challenge-response"
 #define ALGORITHM_NAME          "32/" ARCH_BITS_STR
