@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include "sph_ripemd.h"
+#include "memdbg.h"
 
 /*
  * Round functions for RIPEMD (original).

@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include "params.h"
+#include "memdbg.h"
 
 #define LUKS_MAGIC_L        6
 #define LUKS_CIPHERNAME_L   32
