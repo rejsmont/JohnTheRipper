@@ -103,9 +103,14 @@ extern struct fmt_main fmt_aixssha;
 #endif
 
 #ifdef __SSE2__
-extern struct fmt_main fmt_sha1_ng;
 extern struct fmt_main fmt_rawSHA256_ng;
+#ifndef _MSC_VER
+extern struct fmt_main fmt_sha1_ng;
 extern struct fmt_main fmt_rawSHA512_ng;
+#endif
+#endif
+#ifdef MMX_COEF_SHA256
+extern struct fmt_main fmt_rawSHA256_ng_i;
 #endif
 
 #ifdef HAVE_SKEY
@@ -276,7 +281,12 @@ static void john_register_all(void)
 
 #ifdef __SSE2__
 	john_register_one(&fmt_rawSHA256_ng);
-        john_register_one(&fmt_rawSHA512_ng);
+#ifndef _MSC_VER
+	john_register_one(&fmt_rawSHA512_ng);
+#endif
+#endif
+#ifdef MMX_COEF_SHA256
+	john_register_one(&fmt_rawSHA256_ng_i);
 #endif
 
 #include "fmt_registers.h"
@@ -298,7 +308,7 @@ static void john_register_all(void)
 	john_register_one(&fmt_aixssha);
 #endif
 
-#ifdef __SSE2__
+#if defined (__SSE2__) && !defined(_MSC_VER)
 	john_register_one(&fmt_sha1_ng);
 #endif
 

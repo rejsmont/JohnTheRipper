@@ -4,12 +4,22 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted.
  *
- * New (optional) SHA1 version by JimF 2011, using 16x4 buffer.
+ * New (optional) SHA1 version by JimF 2011, using 16x4 buffer. This change, and
+ * all other modifications to this file by Jim are released with the following terms:
+ * No copyright is claimed, and the software is hereby placed in the public domain.
+ * In case this attempt to disclaim copyright and place the software in the public
+ * domain is deemed null and void, then the software is Copyright (c) 2011 JimF
+ * and it is hereby released to the general public under the following
+ * terms: This software may be modified, redistributed, and used for any
+ * purpose, in source and binary forms, with or without modification.
+ *
  * Use of XOP intrinsics added by Solar Designer, 2012.
  *
  * SHA-2 Copyright 2013, epixoip. Redistribution and use in source and binary
  * forms, with or without modification, are permitted provided that
  * redistribution of source retains the above copyright.
+ *
+ * Incorporation of SHA-2 code JimF, 2013  (WIP)
  */
 
 #include "arch.h"
@@ -27,6 +37,7 @@
 #include "md5.h"
 #include "MD5_std.h"
 #include "stdint.h"
+#include "johnswap.h"
 
 #ifndef __XOP__
 #define _mm_slli_epi32a(a, s) \
@@ -1597,3 +1608,333 @@ void was_crypt_all_rawsha512(uint64_t **saved_key, uint64_t *crypt_key)
 	_mm_store_si128 ((__m128i *) &crypt_key[7], h);
 }
 #endif /* 0 */
+
+
+//#pragma GCC optimize 3
+
+#ifndef __XOP__
+#undef _mm_roti_epi32
+#define _mm_roti_epi32(x, n)        \
+(                                   \
+    _mm_xor_si128 (                 \
+        _mm_srli_epi32(x, ~n + 1),  \
+        _mm_slli_epi32(x, 32 + n)   \
+    )                               \
+)
+
+#define _mm_cmov_si128(y, z, x)     \
+(                                   \
+    _mm_xor_si128 (z,               \
+        _mm_and_si128 (x,           \
+            _mm_xor_si128 (y, z)    \
+        )                           \
+    )                               \
+)
+#endif
+
+#if defined (__SSSE3__)
+#undef _mm_roti_epi32
+#define SWAP_ENDIAN(n)                             \
+{                                                  \
+    n = _mm_shuffle_epi8 (n,                       \
+            _mm_set_epi32 (0x0c0d0e0f, 0x08090a0b, \
+                           0x04050607, 0x00010203  \
+            )                                      \
+        );                                         \
+}
+#define _mm_roti_epi32(x, n)                       \
+(                                                  \
+    _mm_xor_si128 (                                \
+        _mm_srli_epi32(x, ~n + 1),                 \
+        _mm_slli_epi32(x, 32 + n)                  \
+    )                                              \
+)
+#else
+#define ROT16(n)                                                          \
+(                                                                         \
+    _mm_shufflelo_epi16 (                                                 \
+        _mm_shufflehi_epi16 (n, 0xb1), 0xb1                               \
+    )                                                                     \
+)
+
+#define SWAP_ENDIAN(n)                                                    \
+(                                                                         \
+    n = _mm_xor_si128 (                                                   \
+            _mm_srli_epi16 (ROT16(n), 8),                                 \
+            _mm_slli_epi16 (ROT16(n), 8)                                  \
+        )                                                                 \
+)
+#endif
+
+#ifdef __SSE4_1__
+#define GATHER(x, y, z)                     \
+{                                           \
+    x = _mm_cvtsi32_si128 (   y[0][z]   );  \
+    x = _mm_insert_epi32  (x, y[1][z], 1);  \
+    x = _mm_insert_epi32  (x, y[2][z], 2);  \
+    x = _mm_insert_epi32  (x, y[3][z], 3);  \
+}
+#endif
+
+#define S0(x)                           \
+(                                       \
+    _mm_xor_si128 (                     \
+        _mm_roti_epi32 (x, -22),        \
+        _mm_xor_si128 (                 \
+            _mm_roti_epi32 (x,  -2),    \
+            _mm_roti_epi32 (x, -13)     \
+        )                               \
+    )                                   \
+)
+
+#define S1(x)                           \
+(                                       \
+    _mm_xor_si128 (                     \
+        _mm_roti_epi32 (x, -25),        \
+        _mm_xor_si128 (                 \
+            _mm_roti_epi32 (x,  -6),    \
+            _mm_roti_epi32 (x, -11)     \
+        )                               \
+    )                                   \
+)
+
+#define s0(x)                           \
+(                                       \
+    _mm_xor_si128 (                     \
+        _mm_srli_epi32 (x, 3),          \
+        _mm_xor_si128 (                 \
+            _mm_roti_epi32 (x,  -7),    \
+            _mm_roti_epi32 (x, -18)     \
+        )                               \
+    )                                   \
+)
+
+#define s1(x)                           \
+(                                       \
+    _mm_xor_si128 (                     \
+        _mm_srli_epi32 (x, 10),         \
+        _mm_xor_si128 (                 \
+            _mm_roti_epi32 (x, -17),    \
+            _mm_roti_epi32 (x, -19)     \
+        )                               \
+    )                                   \
+)
+
+#define Maj(x,y,z) _mm_cmov_si128 (x, y, _mm_xor_si128 (z, y))
+
+#define Ch(x,y,z) _mm_cmov_si128 (y, z, x)
+
+#define R(t)                                         \
+{                                                    \
+    w[t] = _mm_add_epi32 (s1(w[t -  2]), w[t - 7]);  \
+    w[t] = _mm_add_epi32 (s0(w[t - 15]), w[t]);      \
+    w[t] = _mm_add_epi32 (   w[t - 16],  w[t]);      \
+}
+
+#define SHA256_STEP0(a,b,c,d,e,f,g,h,x,K)            \
+{                                                    \
+    tmp1 = _mm_add_epi32 (h,    S1(e));              \
+    tmp1 = _mm_add_epi32 (tmp1, Ch(e,f,g));          \
+    tmp1 = _mm_add_epi32 (tmp1, _mm_set1_epi32(K));  \
+    tmp1 = _mm_add_epi32 (tmp1, w[x]);               \
+    tmp2 = _mm_add_epi32 (S0(a),Maj(a,b,c));         \
+    d    = _mm_add_epi32 (tmp1, d);                  \
+    h    = _mm_add_epi32 (tmp1, tmp2);               \
+}
+#define SHA256_STEP(a,b,c,d,e,f,g,h,x,K)             \
+{                                                    \
+    R(x);                                            \
+    tmp1 = _mm_add_epi32 (h,    S1(e));              \
+    tmp1 = _mm_add_epi32 (tmp1, Ch(e,f,g));          \
+    tmp1 = _mm_add_epi32 (tmp1, _mm_set1_epi32(K));  \
+    tmp1 = _mm_add_epi32 (tmp1, w[x]);               \
+    tmp2 = _mm_add_epi32 (S0(a),Maj(a,b,c));         \
+    d    = _mm_add_epi32 (tmp1, d);                  \
+    h    = _mm_add_epi32 (tmp1, tmp2);               \
+}
+//#define MOD32(X) (X)>=34?(((X)%17)+16):(X)
+//#define SHA256_STEPR(a,b,c,d,e,f,g,h,x,K) printf ("SHA256_STEPr(a, b, c, d, e, f, g, h, %d, %d, %d, %d, %d, 0x%08x);\n", MOD32(x), MOD32(x-2), MOD32(x-7), MOD32(x-15), MOD32(x-16), K);
+
+/* TODO:
+ *  1. try to get w[] array down to w[32].
+ *  2. Try to get sha224 also working (different IV, and only copy 224 bits)
+ *  3. Handle the init, so we can do more than 1 block.
+ *  4. try to make this function work properly with either a 'flat' input or a more common (in JtR lingo), COEF mixed set of data
+ *  5. Optimizations.  Look at intel, AMD, newest intel, newest AMD, etc performances.
+ *  6. See if we can do anything better using 'DO_PARA' type methods, like we do in SHA1/MD4/5
+ */
+void SSESHA256body_Flat(ARCH_WORD_32 (*saved_key)[64], ARCH_WORD_32 *crypt_key[8], int init) {
+	__m128i a, b, c, d, e, f, g, h;
+	__m128i w[64], tmp1, tmp2;
+
+	int i;
+
+#ifdef __SSE4_1__
+	for (i=0; i < 14; ++i) { GATHER (w[i], saved_key, i); SWAP_ENDIAN (w[i]); }
+	GATHER (w[14], saved_key, 14);
+	GATHER (w[15], saved_key, 15);
+#else
+	int j;
+#if 1
+	ARCH_WORD_32 *p = (ARCH_WORD_32*)w;
+	for (j=0; j < 16; j++)
+		for (i=0; i < MMX_COEF_SHA256; i++)
+			*p++ = saved_key[i][j];
+	for (i=0; i < 14; i++)
+		SWAP_ENDIAN (w[i]);
+#else
+	// 'original' code.  From rawSHA256_ng_fmt.c
+	// the above code, appears faster, but I have not tested
+	// it on AMD. It may be much slower there. Thus, this
+	// 'double copy' code has been left intact.
+#ifdef _MSC_VER
+		__declspec(align(16)) uint32_t __w[16][VWIDTH];
+#else
+        uint32_t __w[16][VWIDTH] __attribute__ ((aligned (16)));
+#endif
+        for (i=0; i < VWIDTH; i++)
+	        for (j=0; j < 16; j++)
+		        __w[j][i] = saved_key[i][j];
+        for (i=0; i < 15; i++)
+        {
+	        w[i] = _mm_load_si128 ((__m128i *) __w[i]);
+	        SWAP_ENDIAN (w[i]);
+        }
+        w[15] = _mm_load_si128 ((__m128i *) __w[15]);
+#endif
+#endif
+
+#if JIMF_DBG
+	printf ("\n");
+	{
+		int i;
+		for (i = 0; i < 16; ++i)
+			printf ("w%02d  %08x %08x %08x %08x\n", i, *(uint32_t*)&(w[i]), ((uint32_t*)&(w[i]))[1], ((uint32_t*)&(w[i]))[2], ((uint32_t*)&(w[i]))[3]);
+	}
+	printf ("\n");
+	printf ("s15  %08x %08x %08x %08x\n", saved_key[0][15], saved_key[1][15], saved_key[2][15], saved_key[3][15]);
+	printf ("\n");
+#endif
+
+	// Need to deal with init code.
+	a = _mm_set1_epi32 (0x6a09e667);
+	b = _mm_set1_epi32 (0xbb67ae85);
+	c = _mm_set1_epi32 (0x3c6ef372);
+	d = _mm_set1_epi32 (0xa54ff53a);
+	e = _mm_set1_epi32 (0x510e527f);
+	f = _mm_set1_epi32 (0x9b05688c);
+	g = _mm_set1_epi32 (0x1f83d9ab);
+	h = _mm_set1_epi32 (0x5be0cd19);
+
+	SHA256_STEP0(a, b, c, d, e, f, g, h,  0, 0x428a2f98);
+	SHA256_STEP0(h, a, b, c, d, e, f, g,  1, 0x71374491);
+	SHA256_STEP0(g, h, a, b, c, d, e, f,  2, 0xb5c0fbcf);
+	SHA256_STEP0(f, g, h, a, b, c, d, e,  3, 0xe9b5dba5);
+	SHA256_STEP0(e, f, g, h, a, b, c, d,  4, 0x3956c25b);
+	SHA256_STEP0(d, e, f, g, h, a, b, c,  5, 0x59f111f1);
+	SHA256_STEP0(c, d, e, f, g, h, a, b,  6, 0x923f82a4);
+	SHA256_STEP0(b, c, d, e, f, g, h, a,  7, 0xab1c5ed5);
+	SHA256_STEP0(a, b, c, d, e, f, g, h,  8, 0xd807aa98);
+	SHA256_STEP0(h, a, b, c, d, e, f, g,  9, 0x12835b01);
+	SHA256_STEP0(g, h, a, b, c, d, e, f, 10, 0x243185be);
+	SHA256_STEP0(f, g, h, a, b, c, d, e, 11, 0x550c7dc3);
+	SHA256_STEP0(e, f, g, h, a, b, c, d, 12, 0x72be5d74);
+	SHA256_STEP0(d, e, f, g, h, a, b, c, 13, 0x80deb1fe);
+	SHA256_STEP0(c, d, e, f, g, h, a, b, 14, 0x9bdc06a7);
+	SHA256_STEP0(b, c, d, e, f, g, h, a, 15, 0xc19bf174);
+
+	SHA256_STEP(a, b, c, d, e, f, g, h, 16, 0xe49b69c1);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 17, 0xefbe4786);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 18, 0x0fc19dc6);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 19, 0x240ca1cc);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 20, 0x2de92c6f);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 21, 0x4a7484aa);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 22, 0x5cb0a9dc);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 23, 0x76f988da);
+	SHA256_STEP(a, b, c, d, e, f, g, h, 24, 0x983e5152);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 25, 0xa831c66d);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 26, 0xb00327c8);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 27, 0xbf597fc7);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 28, 0xc6e00bf3);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 29, 0xd5a79147);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 30, 0x06ca6351);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 31, 0x14292967);
+
+	SHA256_STEP(a, b, c, d, e, f, g, h, 32, 0x27b70a85);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 33, 0x2e1b2138);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 34, 0x4d2c6dfc);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 35, 0x53380d13);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 36, 0x650a7354);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 37, 0x766a0abb);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 38, 0x81c2c92e);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 39, 0x92722c85);
+	SHA256_STEP(a, b, c, d, e, f, g, h, 40, 0xa2bfe8a1);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 41, 0xa81a664b);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 42, 0xc24b8b70);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 43, 0xc76c51a3);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 44, 0xd192e819);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 45, 0xd6990624);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 46, 0xf40e3585);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 47, 0x106aa070);
+
+	SHA256_STEP(a, b, c, d, e, f, g, h, 48, 0x19a4c116);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 49, 0x1e376c08);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 50, 0x2748774c);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 51, 0x34b0bcb5);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 52, 0x391c0cb3);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 53, 0x4ed8aa4a);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 54, 0x5b9cca4f);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 55, 0x682e6ff3);
+	SHA256_STEP(a, b, c, d, e, f, g, h, 56, 0x748f82ee);
+	SHA256_STEP(h, a, b, c, d, e, f, g, 57, 0x78a5636f);
+	SHA256_STEP(g, h, a, b, c, d, e, f, 58, 0x84c87814);
+	SHA256_STEP(f, g, h, a, b, c, d, e, 59, 0x8cc70208);
+	SHA256_STEP(e, f, g, h, a, b, c, d, 60, 0x90befffa);
+	SHA256_STEP(d, e, f, g, h, a, b, c, 61, 0xa4506ceb);
+	SHA256_STEP(c, d, e, f, g, h, a, b, 62, 0xbef9a3f7);
+	SHA256_STEP(b, c, d, e, f, g, h, a, 63, 0xc67178f2);
+
+	// Need to deal with init code.
+	a = _mm_add_epi32 (a, _mm_set1_epi32 (0x6a09e667));
+	b = _mm_add_epi32 (b, _mm_set1_epi32 (0xbb67ae85));
+	c = _mm_add_epi32 (c, _mm_set1_epi32 (0x3c6ef372));
+	d = _mm_add_epi32 (d, _mm_set1_epi32 (0xa54ff53a));
+	e = _mm_add_epi32 (e, _mm_set1_epi32 (0x510e527f));
+	f = _mm_add_epi32 (f, _mm_set1_epi32 (0x9b05688c));
+	g = _mm_add_epi32 (g, _mm_set1_epi32 (0x1f83d9ab));
+	h = _mm_add_epi32 (h, _mm_set1_epi32 (0x5be0cd19));
+
+#if JIMF_DBG
+	printf ("a    %08x %08x %08x %08x\n", ((uint32_t*)&(a))[0], ((uint32_t*)&(a))[1], ((uint32_t*)&(a))[2], ((uint32_t*)&(a))[3]);
+	printf ("b    %08x %08x %08x %08x\n", ((uint32_t*)&(b))[0], ((uint32_t*)&(b))[1], ((uint32_t*)&(b))[2], ((uint32_t*)&(b))[3]);
+	printf ("c    %08x %08x %08x %08x\n", ((uint32_t*)&(c))[0], ((uint32_t*)&(c))[1], ((uint32_t*)&(c))[2], ((uint32_t*)&(c))[3]);
+
+	printf ("\n");
+	{
+		int i;
+		for (i = 0; i < 16; ++i)
+			printf ("w%02d  %08x %08x %08x %08x\n", i, *(uint32_t*)&(w[i]), ((uint32_t*)&(w[i]))[1], ((uint32_t*)&(w[i]))[2], ((uint32_t*)&(w[i]))[3]);
+	}
+	printf ("\n");
+	printf ("s15  %08x %08x %08x %08x\n", saved_key[0][15], saved_key[1][15], saved_key[2][15], saved_key[3][15]);
+
+	exit(0);
+#endif
+
+	_mm_store_si128 ((__m128i *) crypt_key[0], a);
+	_mm_store_si128 ((__m128i *) crypt_key[1], b);
+	_mm_store_si128 ((__m128i *) crypt_key[2], c);
+	_mm_store_si128 ((__m128i *) crypt_key[3], d);
+	_mm_store_si128 ((__m128i *) crypt_key[4], e);
+	_mm_store_si128 ((__m128i *) crypt_key[5], f);
+	_mm_store_si128 ((__m128i *) crypt_key[6], g);
+	_mm_store_si128 ((__m128i *) crypt_key[7], h);
+}
+
+
+void SSESHA256body(__m128i* data, unsigned int * out, int init) {
+}
+void SSESHA512body(__m128i* data, unsigned int * out, int init) {
+}
+void SSESHA512body_flat(ARCH_WORD_64 (*saved_key)[16], ARCH_WORD_64 *crypt_key, int init) {
+}

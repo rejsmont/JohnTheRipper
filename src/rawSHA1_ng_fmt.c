@@ -1,4 +1,5 @@
-#if defined(__SSE2__)
+#if defined(__SSE2__) && !defined (_MSC_VER)
+
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE

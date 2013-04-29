@@ -140,7 +140,7 @@ JOHN_OBJS = \
 	mozilla_fmt.o KeyDBCracker.o mozilla_des.o lowpbe.o mozilla2john.o \
 	krb5-18_fmt.o krb5-23_fmt.o \
 	$(PLUGFORMATS_OBJS) \
-	rawSHA1_ng_fmt.o rawSHA256_ng_fmt.o rawSHA512_ng_fmt.o \
+	rawSHA1_ng_fmt.o rawSHA256_ng_fmt.o rawSHA512_ng_fmt.o rawSHA256_ng_i_fmt.o \
 	plugin.o \
 	dummy.o \
 	NT_fmt.o \
@@ -1699,6 +1699,30 @@ win32-cygwin-x86-sse2:
 		JOHN_OBJS="$(JOHN_OBJS) x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
 		CFLAGS="$(CFLAGS) -mpreferred-stack-boundary=4 -msse2 -m32" \
 		ASFLAGS="$(ASFLAGS) -msse2 -m32 -DUNDERSCORES"
+	@echo "Failing after this point just means some helper tools did not build:"
+	$(MAKE) $(PROJ_CXX) CFLAGS="$(CFLAGS) -m32"
+	$(MAKE) $(PROJ_PCAP) CFLAGS="$(CFLAGS) -m32"
+	@echo "All done"
+
+win32-cygwin-x86-sse4:
+	$(CP) x86-sse.h arch.h
+	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
+	$(MAKE) $(PROJ_WIN32) \
+		JOHN_OBJS="$(JOHN_OBJS) x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
+		CFLAGS="$(CFLAGS) -mpreferred-stack-boundary=4 -msse4 -m32" \
+		ASFLAGS="$(ASFLAGS) -msse4 -m32 -DUNDERSCORES"
+	@echo "Failing after this point just means some helper tools did not build:"
+	$(MAKE) $(PROJ_CXX) CFLAGS="$(CFLAGS) -m32"
+	$(MAKE) $(PROJ_PCAP) CFLAGS="$(CFLAGS) -m32"
+	@echo "All done"
+
+win32-cygwin-x86-ssse3:
+	$(CP) x86-sse.h arch.h
+	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
+	$(MAKE) $(PROJ_WIN32) \
+		JOHN_OBJS="$(JOHN_OBJS) x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
+		CFLAGS="$(CFLAGS) -mpreferred-stack-boundary=4 -mssse3 -m32" \
+		ASFLAGS="$(ASFLAGS) -mssse3 -m32 -DUNDERSCORES"
 	@echo "Failing after this point just means some helper tools did not build:"
 	$(MAKE) $(PROJ_CXX) CFLAGS="$(CFLAGS) -m32"
 	$(MAKE) $(PROJ_PCAP) CFLAGS="$(CFLAGS) -m32"
