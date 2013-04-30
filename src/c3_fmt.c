@@ -31,6 +31,7 @@
 #include "common.h"
 #include "formats.h"
 #include "loader.h"
+#include "john.h"
 #ifdef HAVE_MPI
 #include "john-mpi.h"
 #endif
@@ -203,9 +204,7 @@ static int valid(char *ciphertext, struct fmt_main *self)
 	}
 
 	if (id != 10 && !ldr_in_pot)
-#ifdef HAVE_MPI
-	if (mpi_id == 0)
-#endif
+	if (john_main_process)
 		fprintf(stderr, "Warning: "
 		    "hash encoding string length %d, type id %c%c\n"
 		    "appears to be unsupported on this system; "

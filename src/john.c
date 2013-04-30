@@ -47,9 +47,6 @@
 
 #ifdef HAVE_MPI
 #include "john-mpi.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif /* _OPENMP */
 #endif /* HAVE_MPI */
 
 #include <openssl/opensslv.h>
@@ -219,6 +216,10 @@ extern int keystore2john(int argc, char **argv);
 extern int truecrypt_volume2john(int argc, char **argv);
 #endif
 extern int zip2john(int argc, char **argv);
+
+int john_main_process = 1;
+int john_child_count = 0;
+int *john_child_pids = NULL;
 
 static struct db_main database;
 static struct fmt_main dummy_format;
@@ -397,10 +398,8 @@ static void john_register_all(void)
 #endif
 
 	if (!fmt_list) {
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "Unknown ciphertext format name requested\n");
+		if (john_main_process)
+			fprintf(stderr, "Unknown ciphertext format name requested\n");
 		error();
 	}
 }
@@ -439,11 +438,21 @@ static void john_log_format(void)
 static void john_fork(void)
 {
 	int i, pid;
+	int *pids;
 
-	if (!options.fork)
+	if (options.fork < 2)
 		return;
 
-	sig_pids = mem_alloc((options.fork - 1) * sizeof(*sig_pids));
+/*
+ * It may cost less memory to reset john_main_process to 0 before fork()'ing
+ * the children than to do it in every child process individually (triggering
+ * copy-on-write of the entire page).  We then reset john_main_process back to
+ * 1 in the parent, but this only costs one page, not one page per child.
+ */
+	john_main_process = 0;
+
+	pids = mem_alloc_tiny((options.fork - 1) * sizeof(*pids),
+	    sizeof(*pids));
 
 	for (i = 1; i < options.fork; i++) {
 		switch ((pid = fork())) {
@@ -451,15 +460,18 @@ static void john_fork(void)
 			pexit("fork");
 
 		case 0:
-			MEM_FREE(sig_pids);
 			options.node_min += i;
 			options.node_max = options.node_min;
 			return;
 
 		default:
-			sig_pids[i - 1] = pid;
+			pids[i - 1] = pid;
 		}
 	}
+
+	john_main_process = 1;
+	john_child_pids = pids;
+	john_child_count = options.fork - 1;
 
 	options.node_max = options.node_min;
 }
@@ -817,9 +829,7 @@ static void john_run(void)
 			/* Now we need to re-check this */
 			if (options.force_maxlength &&
 			    options.force_maxlength < options.force_minlength) {
-#ifdef HAVE_MPI
-				if (mpi_id == 0)
-#endif
+				if (john_main_process)
 					fprintf(stderr, "Invalid option: "
 					        "--max-length smaller than "
 					        "minimum length for format\n");
@@ -849,34 +859,22 @@ static void john_run(void)
 		status_print();
 		tty_done();
 
-		if (database.password_count < remaining) {
+		if (john_main_process && database.password_count < remaining) {
 			char *might = "Warning: passwords printed above might";
 			char *partial = " be partial";
 			char *not_all = " not be all those cracked";
 			switch (database.options->flags &
 			    (DB_SPLIT | DB_NODUP)) {
 			case DB_SPLIT:
-#ifdef HAVE_MPI
-				if (mpi_id == 0)
-#endif
 				fprintf(stderr, "%s%s\n", might, partial);
 				break;
 			case DB_NODUP:
-#ifdef HAVE_MPI
-				if (mpi_id == 0)
-#endif
 				fprintf(stderr, "%s%s\n", might, not_all);
 				break;
 			case (DB_SPLIT | DB_NODUP):
-#ifdef HAVE_MPI
-				if (mpi_id == 0)
-#endif
 				fprintf(stderr, "%s%s and%s\n",
 				    might, partial, not_all);
 			}
-#ifdef HAVE_MPI
-			if (mpi_id == 0)
-#endif
 			fputs("Use the \"--show\" option to display all of "
 			    "the cracked passwords reliably\n", stderr);
 		}

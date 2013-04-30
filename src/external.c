@@ -19,14 +19,10 @@
 #include "options.h"
 #include "config.h"
 #include "cracker.h"
+#include "john.h"
 #include "external.h"
 #include "options.h"
-#ifdef HAVE_MPI
-#include "john-mpi.h"
 #include "memdbg.h"
-
-static unsigned long long mpi_line = 0;
-#endif
 
 static char int_word[PLAINTEXT_BUFFER_SIZE];
 static char rec_word[PLAINTEXT_BUFFER_SIZE];
@@ -120,19 +116,15 @@ static void ext_rewind(void)
 int ext_has_function(char *mode, char *function)
 {
 	if (!(ext_source = cfg_get_list(SECTION_EXT, mode))) {
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "Unknown external mode: %s\n", mode);
+		if (john_main_process)
+			fprintf(stderr, "Unknown external mode: %s\n", mode);
 		error();
 	}
 	if (c_compile(ext_getchar, ext_rewind, &ext_globals)) {
 		if (!ext_line) ext_line = ext_source->tail;
 
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "Compiler error in %s at line %d: %s\n",
+		if (john_main_process)
+			fprintf(stderr, "Compiler error in %s at line %d: %s\n",
 			ext_line->cfg_name, ext_line->number,
 			c_errors[c_errno]);
 		error();
@@ -157,22 +149,19 @@ void ext_init(char *mode, struct db_main *db)
 		ext_minlen = 0;
 
 	if (!(ext_source = cfg_get_list(SECTION_EXT, mode))) {
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "Unknown external mode: %s\n", mode);
+		if (john_main_process)
+			fprintf(stderr, "Unknown external mode: %s\n", mode);
 		error();
 	}
 
 	if (c_compile(ext_getchar, ext_rewind, &ext_globals)) {
 		if (!ext_line) ext_line = ext_source->tail;
 
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "Compiler error in %s at line %d: %s\n",
-			ext_line->cfg_name, ext_line->number,
-			c_errors[c_errno]);
+		if (john_main_process)
+			fprintf(stderr,
+			    "Compiler error in %s at line %d: %s\n",
+			    cfg_name, ext_line->number,
+			    c_errors[c_errno]);
 		error();
 	}
 
@@ -183,24 +172,21 @@ void ext_init(char *mode, struct db_main *db)
 	f_filter = c_lookup("filter");
 
 	if ((ext_flags & EXT_REQ_GENERATE) && !f_generate) {
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "No generate() for external mode: %s\n", mode);
+		if (john_main_process)
+			fprintf(stderr,
+			    "No generate() for external mode: %s\n", mode);
 		error();
 	}
 	if ((ext_flags & EXT_REQ_FILTER) && !f_filter) {
-#ifdef HAVE_MPI
-		if (mpi_id == 0)
-#endif
-		fprintf(stderr, "No filter() for external mode: %s\n", mode);
+		if (john_main_process)
+			fprintf(stderr,
+			    "No filter() for external mode: %s\n", mode);
 		error();
 	}
-	if ((ext_flags & (EXT_USES_GENERATE | EXT_USES_FILTER)) ==
+	if (john_main_process &&
+	    (ext_flags & (EXT_USES_GENERATE | EXT_USES_FILTER)) ==
 	    EXT_USES_FILTER && f_generate)
-#ifdef HAVE_MPI
-	if (mpi_id == 0)
-#endif
+	if (john_main_process)
 		fprintf(stderr, "Warning: external mode defines generate(), "
 		    "but is only used for filter()\n");
 
@@ -290,9 +276,6 @@ static int restore_state(FILE *file)
 	} while ((*internal++ = *external++ = c));
 
 	c_execute(c_lookup("restore"));
-#ifdef HAVE_MPI
-	mpi_line = mpi_id + 1;  // We just need the correct modulus
-#endif
 
 	return 0;
 }
@@ -309,10 +292,6 @@ void do_external_crack(struct db_main *db)
 	c_int *external;
 
 	log_event("Proceeding with external mode: %.100s", ext_mode);
-
-#ifdef HAVE_MPI
-	if (mpi_p > 1) log_event("MPI: each node will process 1/%u of candidates", mpi_p);
-#endif
 
 	internal = (unsigned char *)int_word;
 	external = ext_word;
@@ -351,10 +330,6 @@ void do_external_crack(struct db_main *db)
 				continue;
 		}
 
-#ifdef HAVE_MPI
-		// MPI distribution
-		if (mpi_line++ % mpi_p != mpi_id) continue;
-#endif
 		int_word[0] = ext_word[0];
 		if ((int_word[1] = ext_word[1])) {
 			internal = (unsigned char *)&int_word[2];

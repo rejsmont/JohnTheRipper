@@ -39,12 +39,6 @@
 #include "config.h"
 #include "unicode.h"
 #include "signals.h"
-
-#ifdef HAVE_MPI
-#include "logger.h"
-#include "john-mpi.h"
-#endif
-
 #include "memdbg.h"
 
 struct status_main status;
