@@ -309,80 +309,83 @@ static char *status_get_ETA(char *percent, unsigned int secs_done)
 static void status_print_cracking(char *percent)
 {
 	unsigned int time = status_get_time();
-	char *key, saved_key[PLAINTEXT_BUFFER_SIZE];
+	char *key1, key2[PLAINTEXT_BUFFER_SIZE];
+	UTF8 t1buf[PLAINTEXT_BUFFER_SIZE + 1];
 	int64 g = {status.guess_count, 0};
 	char s_gps[32], s_pps[32], s_crypts_ps[32], s_combs_ps[32];
-	char cand[32] = "";
+	char s1[32], s2[256], s3[72], s4[40];
+	char sc[32];
 
-	if (!(options.flags & FLG_STATUS_CHK)) {
-		if ((key = crk_get_key2()))
-			strnzcpy(saved_key, key, PLAINTEXT_BUFFER_SIZE);
-		else
-			saved_key[0] = 0;
+	key1 = NULL;
+	key2[0] = 0;
+	if (!(options.flags & FLG_STATUS_CHK) &&
+	    (status.crypts.lo | status.crypts.hi)) {
+		char *key = crk_get_key2();
+		if (key)
+			strnzcpy(key2, key, sizeof(key2));
+		key1 = crk_get_key1();
+
+		if (options.report_utf8 && !options.utf8) {
+			UTF8 t2buf[PLAINTEXT_BUFFER_SIZE + 1];
+			char *t;
+			key1 = (char*)enc_to_utf8_r(key1, t1buf, PLAINTEXT_BUFFER_SIZE);
+			t = (char*)enc_to_utf8_r(key2, t2buf, PLAINTEXT_BUFFER_SIZE);
+			strnzcpy(key2, t, sizeof(key2));
+		}
 	}
 
+	s1[0] = s2[0] = s3[0] = s4[0] = 0;
+	sc[0] = 0;
+
+	if (options.fork)
+		sprintf(s1, "%u ", options.node_min);
+
 	if (showcand)
-		sprintf(cand, "/%llu",
+		sprintf(sc, "/%llu",
 		        ((unsigned long long)status.crypts.hi << 32) +
 		        status.crypts.lo);
 
-	fprintf(stderr,
-	    "%ug %u:%02u:%02u:%02u%s%s %sg/s ",
+	sprintf(s2,
+	    "%ug%s %u:%02u:%02u:%02u%s%s %sg/s ",
 	    status.guess_count,
+	    sc,
 	    time / 86400, time % 86400 / 3600, time % 3600 / 60, time % 60,
 		strncmp(percent, " 100", 4) ? percent : " DONE",
 		status_get_ETA(percent,time),
 	    status_get_cps(s_gps, &g, 0));
 
 	if (!status.compat)
-		fprintf(stderr,
+		sprintf(s3,
 		    "%sp/s %sc/s ",
 		    status_get_cps(s_pps, &status.cands, 0),
 		    status_get_cps(s_crypts_ps, &status.crypts, 0));
 
-	fprintf(stderr, "%sC/s",
+	sprintf(s4, "%sC/s",
 	    status_get_cps(s_combs_ps, &status.combs, status.combs_ehi));
 
-	if ((options.flags & FLG_STATUS_CHK) ||
-	    !(status.crypts.lo | status.crypts.hi))
-		fputc('\n', stderr);
-	else {
-		UTF8 t1buf[PLAINTEXT_BUFFER_SIZE + 1];
-		UTF8 t2buf[PLAINTEXT_BUFFER_SIZE + 1];
-		char *t1, *t2;
-
-		if (options.report_utf8 && !options.utf8) {
-			t1 = (char*)enc_to_utf8_r(crk_get_key1(), t1buf, PLAINTEXT_BUFFER_SIZE);
-			t2 = (char*)enc_to_utf8_r(saved_key, t2buf, PLAINTEXT_BUFFER_SIZE);
-		} else {
-			t1 = crk_get_key1();
-			t2 = saved_key;
-		}
-		if (!saved_key[0])
-			fprintf(stderr, " %s\n", t1);
-		else
-			fprintf(stderr, " %s..%s\n", t1, t2);
-	}
+	fprintf(stderr, "%s%s%s%s%s%s%s%s\n", s1, s2, s3, s4,
+	    key1 ? " " : "", key1 ? key1 : "", key2[0] ? ".." : "", key2);
 }
 
 static void status_print_stdout(char *percent)
 {
 	unsigned int time = status_get_time();
+	char *key;
 	char s_pps[32], s_p[32];
 
+	key = NULL;
+	if (!(options.flags & FLG_STATUS_CHK) &&
+	    (status.crypts.lo | status.crypts.hi))
+		key = crk_get_key1();
+
 	fprintf(stderr,
-	    "%sp %u:%02u:%02u:%02u%s%s %sp/s",
+	    "%sp %u:%02u:%02u:%02u%s%s %sp/s%s%s",
 	    status_get_c(s_p, &status.cands, 0),
 	    time / 86400, time % 86400 / 3600, time % 3600 / 60, time % 60,
 		strncmp(percent, " 100", 4) ? percent : " DONE",
 		status_get_ETA(percent,time),
-	    status_get_cps(s_pps, &status.cands, 0));
-
-	if ((options.flags & FLG_STATUS_CHK) ||
-	    !(status.cands.lo | status.cands.hi))
-		fputc('\n', stderr);
-	else
-		fprintf(stderr, " %s\n", crk_get_key1());
+	    status_get_cps(s_pps, &status.cands, 0),
+	    key ? " " : "", key ? key : "");
 }
 
 void status_print(void)
