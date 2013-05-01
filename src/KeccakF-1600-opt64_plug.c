@@ -17,7 +17,6 @@ http://creativecommons.org/publicdomain/zero/1.0/
 /* #include "brg_endian.h" */
 #include "KeccakF-1600-opt64-settings.h"
 #include "KeccakF-1600-interface.h"
-//#include "memdbg.h" FIXME: This does not work here
 
 typedef unsigned char UINT8;
 typedef unsigned long long int UINT64;
@@ -176,6 +175,8 @@ ALIGN const UINT64 rot_39_41[2] = {39, 41};
 #endif
 
 #include "KeccakF-1600-unrolling.macros"
+
+#include "memdbg.h"
 
 void KeccakPermutationOnWords(UINT64 *state)
 {
