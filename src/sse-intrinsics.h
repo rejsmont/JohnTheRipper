@@ -94,11 +94,10 @@ void SSESHA1body(__m128i* data, unsigned int * out, unsigned int * reload_state,
 
 #ifdef MMX_COEF_SHA256
 #define SHA256_ALGORITHM_NAME	"128/128 " SIMD_TYPE " intrinsics " STRINGIZE(MMX_COEF_SHA256)"x"
-void SSESHA256body(__m128i* data, ARCH_WORD_32 *crypt_key, int sha256_flags);
+void SSESHA256body(__m128i* data, ARCH_WORD_32 *out, int sha256_flags);
 #endif
 
 #ifdef MMX_COEF_SHA512
 #define SHA512_ALGORITHM_NAME	"128/128 " SIMD_TYPE " intrinsics " STRINGIZE(MMX_COEF_SHA512)"x"
-void SSESHA512body(__m128i* data, unsigned int * out, int init);
-void SSESHA512body_flat(ARCH_WORD_64 (*saved_key)[16], ARCH_WORD_64 *crypt_key, int init);
+void SSESHA512body(__m128i* data, ARCH_WORD_32 *out, int init);
 #endif

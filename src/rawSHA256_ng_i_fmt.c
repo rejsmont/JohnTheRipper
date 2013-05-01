@@ -44,8 +44,7 @@
 // IS kept the same (makes for easier running after a change).
 
 //#define TEST_SHA224
-//#define MMX_LOAD 16
-#define MMX_LOAD 32
+#define MMX_LOAD 16
 
 #define FORMAT_LABEL              "raw-sha256-ng-i"
 #define ALGORITHM_NAME            SHA256_ALGORITHM_NAME
@@ -309,18 +308,10 @@ static void crypt_all (int count)
 #endif
     {
 #ifdef MMX_LOAD
- #if (MMX_LOAD==16)
-  #ifdef TEST_SHA224
-		SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN|SHA256_CRYPT_SHA224|SHA256_MIXED_IN);
-  #else
-		SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN);
-  #endif
+ #ifdef TEST_SHA224
+	SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN|SHA256_CRYPT_SHA224);
  #else
-  #ifdef TEST_SHA224
-		SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN64|SHA256_CRYPT_SHA224);
-  #else
-		SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN64);
-  #endif
+	SSESHA256body(&saved_key[i/MMX_COEF_SHA256], crypt_key[i/MMX_COEF_SHA256], SHA256_MIXED_IN);
  #endif
 #else
  #ifdef TEST_SHA224

@@ -14,7 +14,7 @@
 #ifndef _JOHN_ARCH_H
 #define _JOHN_ARCH_H
 
-#ifdef _MSC_VER
+#if defined (_MSC_VER) && !defined (_OPENMP)
 #define __SSE2__
 //#define __SSSE3__
 //#define __SSE4_1__

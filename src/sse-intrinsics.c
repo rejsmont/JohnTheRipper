@@ -19,7 +19,18 @@
  * forms, with or without modification, are permitted provided that
  * redistribution of source retains the above copyright.
  *
- * Incorporation of SHA-2 code JimF, 2013  (WIP)
+ * JimF, 2013:
+ * Rewrote SHA-256 function code These improvements over original code found in
+ * rawSHA256_ng_fmt.c (copywrite epixoip) are:
+ *    SHA256 and SHA224 support.
+ *    Multi block support (reload state from prior crypt)
+ *    handle either flat, and SSE interleaved input buffers.
+ *    Optional un-BE of results (normally not done).
+ *    integration support (simply include "sse-intrinsics.h"
+ *    #defines for algorithm name
+ *    Output is in interleaved SSE format.
+ *    OMP safe (output structure would have been a problem as implemented in raw_SHA256_ng_fmt.c)
+ *    Code only requires [16] element array.  Original code required [64] elements.
  */
 
 #include "arch.h"
@@ -1484,11 +1495,12 @@ void was_crypt_all_rawsha512(uint64_t **saved_key, uint64_t *crypt_key)
 
 #define Ch(x,y,z) _mm_cmov_si128 (y, z, x)
 
-#define R(t)                                         \
-{                                                    \
-    w[t] = _mm_add_epi32 (s1(w[t -  2]), w[t - 7]);  \
-    w[t] = _mm_add_epi32 (s0(w[t - 15]), w[t]);      \
-    w[t] = _mm_add_epi32 (   w[t - 16],  w[t]);      \
+#undef R
+#define R(x,x1,x2,x3)                         \
+{                                             \
+    tmp1 = _mm_add_epi32 (s1(w[x1]), w[x2]);  \
+    tmp1 = _mm_add_epi32 (w[x],  tmp1);       \
+    w[x] = _mm_add_epi32 (s0(w[x3]), tmp1);   \
 }
 
 #define SHA256_STEP0(a,b,c,d,e,f,g,h,x,K)            \
@@ -1501,65 +1513,44 @@ void was_crypt_all_rawsha512(uint64_t **saved_key, uint64_t *crypt_key)
     d    = _mm_add_epi32 (tmp1, d);                  \
     h    = _mm_add_epi32 (tmp1, tmp2);               \
 }
-#define SHA256_STEP(a,b,c,d,e,f,g,h,x,K)             \
+#define SHA256_STEP_R(a,b,c,d,e,f,g,h, x,x1,x2,x3, K)\
 {                                                    \
-    R(x);                                            \
+	R(x,x1,x2,x3);								     \
     tmp1 = _mm_add_epi32 (h,    S1(e));              \
     tmp1 = _mm_add_epi32 (tmp1, Ch(e,f,g));          \
     tmp1 = _mm_add_epi32 (tmp1, _mm_set1_epi32(K));  \
-    tmp1 = _mm_add_epi32 (tmp1, w[x]);               \
+    tmp1 = _mm_add_epi32 (tmp1, w[x]);				 \
     tmp2 = _mm_add_epi32 (S0(a),Maj(a,b,c));         \
     d    = _mm_add_epi32 (tmp1, d);                  \
     h    = _mm_add_epi32 (tmp1, tmp2);               \
 }
 
-#define _R(t,t1,t2,t3,t4)                            \
-{                                                    \
-    tmp1 = _mm_add_epi32 (s1(w[t1]), w[t2]);         \
-    tmp1 = _mm_add_epi32 (   w[t4],  tmp1);          \
-    w[t] = _mm_add_epi32 (s0(w[t3]), tmp1);          \
-}
-
-#define _SHA256_STEP(a,b,c,d,e,f,g,h,x,x1,x2,x3,x4,K)\
-{                                                    \
-    _R(x,x1,x2,x3,x4);                               \
-    tmp1 = _mm_add_epi32 (h,    S1(e));              \
-    tmp1 = _mm_add_epi32 (tmp1, Ch(e,f,g));          \
-    tmp1 = _mm_add_epi32 (tmp1, _mm_set1_epi32(K));  \
-    tmp1 = _mm_add_epi32 (tmp1, w[x]);               \
-    tmp2 = _mm_add_epi32 (S0(a),Maj(a,b,c));         \
-    d    = _mm_add_epi32 (tmp1, d);                  \
-    h    = _mm_add_epi32 (tmp1, tmp2);               \
-}
-
-// this macro was used to create the new macros for the smaller w[32] array
+// this macro was used to create the new macros for the smaller w[16] array.
 /*
 #define SHA256_STEP(a,b,c,d,e,f,g,h,x,K)       \
-	printf ("_SHA256_STEP(%s,%s,%s,%s,%s,%s,%s,%s, %d,%d,%2d,%2d,%2d, 0x%08x);\n", \
+	printf ("_SHA256_STEP(%s,%s,%s,%s,%s,%s,%s,%s, %d,%d,%2d,%2d, 0x%08x);\n", \
                         #a, #b, #c, #d, #e, #f, #g, #h, \
-                        16+(x)%16, (x-2)>15?16+(x-2)%16:x-2, (x-7)>15?16+(x-7)%16:x-7, (x-15)>15?16+(x-15)%16:x-15, (x-16)>15?16+(x-16)%16:x-16, K);
+                        (x)%16, (x-2)>15?(x-2)%16:x-2, (x-7)>15?(x-7)%16:x-7, (x-15)>15?(x-15)%16:x-15, K);
 */
 
 /* TODO:
- *  1. (DONE) try to get w[] array down to w[32].
- *  2. (DONE) Try to get sha224 also working (different IV, and only copy 224 bits)
+ *  1. (DONE) try to get w[] array down to w[32].  (Actually, now it is ONLY [16] in size.
+ *            the data[] array is only required to be 16 elements also.
+ *  2. (DONE) Get sha224 working (different IV, and only copy 224 bits)
  *  3. (DONE, needs tested.) Handle the init, so we can do more than 1 block.
  *  4. (DONE) try to make this function work properly with either a 'flat' input or a more common (in JtR lingo), COEF mixed set of data
  *  5. (DONE) Redid the out, into a MMX mixed blob, and not 8 arrays
  *  6. Optimizations.  Look at intel, AMD, newest intel, newest AMD, etc performances.
  *  7. See if we can do anything better using 'DO_PARA' type methods, like we do in SHA1/MD4/5
  */
-//#define JIMF_DBG 1
 void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 {
 	__m128i a, b, c, d, e, f, g, h;
-	__m128i _w[32], tmp1, tmp2, *w=_w;
+	__m128i _w[16], tmp1, tmp2, *w=_w;
 	ARCH_WORD_32 *saved_key=0;
 
 	int i;
-	if (sha256_flags & SHA256_MIXED_IN64) {
-		w = data;
-	} else if (sha256_flags & SHA256_FLAT_IN) {
+	if (sha256_flags & SHA256_FLAT_IN) {
 #ifdef __SSE4_1__
 		saved_key = (ARCH_WORD_32 *)data;
 		for (i=0; i < 14; ++i) { GATHER (w[i], saved_key, i); SWAP_ENDIAN (w[i]); }
@@ -1567,7 +1558,6 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 		GATHER (w[15], saved_key, 15);
 #else
 		int j;
-#if 1
 		ARCH_WORD_32 *p = (ARCH_WORD_32*)w;
 		saved_key = (ARCH_WORD_32 *)data;
 		for (j=0; j < 16; j++)
@@ -1575,45 +1565,10 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 				*p++ = saved_key[(i<<4)+j];
 		for (i=0; i < 14; i++)
 			SWAP_ENDIAN (w[i]);
-#else
-		// 'original' code.  From rawSHA256_ng_fmt.c
-		// the above code, appears faster, but I have not tested
-		// it on AMD. It may be much slower there. Thus, this
-		// 'double copy' code has been left intact.
-#ifdef _MSC_VER
-			__declspec(align(16)) uint32_t __w[16][VWIDTH];
-#else
-		    uint32_t __w[16][VWIDTH] __attribute__ ((aligned (16)));
 #endif
-			saved_key = (ARCH_WORD_32 *)data;
-			for (i=0; i < VWIDTH; i++)
-				for (j=0; j < 16; j++)
-					__w[j][i] = saved_key[i][j];
-			for (i=0; i < 15; i++)
-			{
-				w[i] = _mm_load_si128 ((__m128i *) __w[i]);
-				SWAP_ENDIAN (w[i]);
-			}
-			w[15] = _mm_load_si128 ((__m128i *) __w[15]);
-#endif
-#endif
-	} else {
-		// If neither SHA256_MIXED_IN64 or SHA256_FLAT_IN are set, then we are in SHA256_MIXED_IN mode
-		// simply copy over the first 16 __m128i values.
+	} else
 		memcpy(w, data, 16*sizeof(__m128i));
-	}
 
-#if JIMF_DBG
-	printf ("\n");
-	{
-		int i;
-		for (i = 0; i < 16; ++i)
-			printf ("w%02d  %08x %08x %08x %08x\n", i, *(uint32_t*)&(w[i]), ((uint32_t*)&(w[i]))[1], ((uint32_t*)&(w[i]))[2], ((uint32_t*)&(w[i]))[3]);
-	}
-	printf ("\n");
-	printf ("s15  %08x %08x %08x %08x\n", saved_key[15], saved_key[16+15], saved_key[32+15], saved_key[48+15]);
-	printf ("\n");
-#endif
 
 	if (sha256_flags & SHA256_RELOAD) {
 		__m128i *p = (__m128i *)out;
@@ -1621,28 +1576,19 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 		e=p[4]; f=p[5]; g=p[6]; h=p[7];
 	} else {
 		if (sha256_flags & SHA256_CRYPT_SHA224) {
-			// SHA-224 IV
-			a = _mm_set1_epi32 (0xc1059ed8);
-			b = _mm_set1_epi32 (0x367cd507);
-			c = _mm_set1_epi32 (0x3070dd17);
-			d = _mm_set1_epi32 (0xf70e5939);
-			e = _mm_set1_epi32 (0xffc00b31);
-			f = _mm_set1_epi32 (0x68581511);
-			g = _mm_set1_epi32 (0x64f98fa7);
-			h = _mm_set1_epi32 (0xbefa4fa4);
+			/* SHA-224 IV */
+			a = _mm_set1_epi32 (0xc1059ed8); b = _mm_set1_epi32 (0x367cd507);
+			c = _mm_set1_epi32 (0x3070dd17); d = _mm_set1_epi32 (0xf70e5939);
+			e = _mm_set1_epi32 (0xffc00b31); f = _mm_set1_epi32 (0x68581511);
+			g = _mm_set1_epi32 (0x64f98fa7); h = _mm_set1_epi32 (0xbefa4fa4);
 		} else {
-			// SHA-256 IV
-			a = _mm_set1_epi32 (0x6a09e667);
-			b = _mm_set1_epi32 (0xbb67ae85);
-			c = _mm_set1_epi32 (0x3c6ef372);
-			d = _mm_set1_epi32 (0xa54ff53a);
-			e = _mm_set1_epi32 (0x510e527f);
-			f = _mm_set1_epi32 (0x9b05688c);
-			g = _mm_set1_epi32 (0x1f83d9ab);
-			h = _mm_set1_epi32 (0x5be0cd19);
+			// SHA-256 IV */
+			a = _mm_set1_epi32 (0x6a09e667); b = _mm_set1_epi32 (0xbb67ae85);
+			c = _mm_set1_epi32 (0x3c6ef372); d = _mm_set1_epi32 (0xa54ff53a);
+			e = _mm_set1_epi32 (0x510e527f); f = _mm_set1_epi32 (0x9b05688c);
+			g = _mm_set1_epi32 (0x1f83d9ab); h = _mm_set1_epi32 (0x5be0cd19);
 		}
 	}
-
 	SHA256_STEP0(a, b, c, d, e, f, g, h,  0, 0x428a2f98);
 	SHA256_STEP0(h, a, b, c, d, e, f, g,  1, 0x71374491);
 	SHA256_STEP0(g, h, a, b, c, d, e, f,  2, 0xb5c0fbcf);
@@ -1660,124 +1606,66 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 	SHA256_STEP0(c, d, e, f, g, h, a, b, 14, 0x9bdc06a7);
 	SHA256_STEP0(b, c, d, e, f, g, h, a, 15, 0xc19bf174);
 
-//	printf("\n");
-	/*
-	SHA256_STEP(a, b, c, d, e, f, g, h, 16, 0xe49b69c1);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 17, 0xefbe4786);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 18, 0x0fc19dc6);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 19, 0x240ca1cc);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 20, 0x2de92c6f);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 21, 0x4a7484aa);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 22, 0x5cb0a9dc);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 23, 0x76f988da);
-	SHA256_STEP(a, b, c, d, e, f, g, h, 24, 0x983e5152);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 25, 0xa831c66d);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 26, 0xb00327c8);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 27, 0xbf597fc7);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 28, 0xc6e00bf3);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 29, 0xd5a79147);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 30, 0x06ca6351);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 31, 0x14292967);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  0,14, 9, 1, 0xe49b69c1);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  1,15,10, 2, 0xefbe4786);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f,  2, 0,11, 3, 0x0fc19dc6);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e,  3, 1,12, 4, 0x240ca1cc);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d,  4, 2,13, 5, 0x2de92c6f);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c,  5, 3,14, 6, 0x4a7484aa);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b,  6, 4,15, 7, 0x5cb0a9dc);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a,  7, 5, 0, 8, 0x76f988da);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  8, 6, 1, 9, 0x983e5152);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  9, 7, 2,10, 0xa831c66d);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f, 10, 8, 3,11, 0xb00327c8);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e, 11, 9, 4,12, 0xbf597fc7);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d, 12,10, 5,13, 0xc6e00bf3);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c, 13,11, 6,14, 0xd5a79147);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b, 14,12, 7,15, 0x06ca6351);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a, 15,13, 8, 0, 0x14292967);
 
-	SHA256_STEP(a, b, c, d, e, f, g, h, 32, 0x27b70a85);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 33, 0x2e1b2138);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 34, 0x4d2c6dfc);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 35, 0x53380d13);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 36, 0x650a7354);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 37, 0x766a0abb);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 38, 0x81c2c92e);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 39, 0x92722c85);
-	SHA256_STEP(a, b, c, d, e, f, g, h, 40, 0xa2bfe8a1);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 41, 0xa81a664b);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 42, 0xc24b8b70);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 43, 0xc76c51a3);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 44, 0xd192e819);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 45, 0xd6990624);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 46, 0xf40e3585);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 47, 0x106aa070);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  0,14, 9, 1, 0x27b70a85);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  1,15,10, 2, 0x2e1b2138);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f,  2, 0,11, 3, 0x4d2c6dfc);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e,  3, 1,12, 4, 0x53380d13);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d,  4, 2,13, 5, 0x650a7354);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c,  5, 3,14, 6, 0x766a0abb);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b,  6, 4,15, 7, 0x81c2c92e);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a,  7, 5, 0, 8, 0x92722c85);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  8, 6, 1, 9, 0xa2bfe8a1);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  9, 7, 2,10, 0xa81a664b);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f, 10, 8, 3,11, 0xc24b8b70);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e, 11, 9, 4,12, 0xc76c51a3);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d, 12,10, 5,13, 0xd192e819);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c, 13,11, 6,14, 0xd6990624);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b, 14,12, 7,15, 0xf40e3585);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a, 15,13, 8, 0, 0x106aa070);
 
-	SHA256_STEP(a, b, c, d, e, f, g, h, 48, 0x19a4c116);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 49, 0x1e376c08);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 50, 0x2748774c);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 51, 0x34b0bcb5);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 52, 0x391c0cb3);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 53, 0x4ed8aa4a);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 54, 0x5b9cca4f);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 55, 0x682e6ff3);
-	SHA256_STEP(a, b, c, d, e, f, g, h, 56, 0x748f82ee);
-	SHA256_STEP(h, a, b, c, d, e, f, g, 57, 0x78a5636f);
-	SHA256_STEP(g, h, a, b, c, d, e, f, 58, 0x84c87814);
-	SHA256_STEP(f, g, h, a, b, c, d, e, 59, 0x8cc70208);
-	SHA256_STEP(e, f, g, h, a, b, c, d, 60, 0x90befffa);
-	SHA256_STEP(d, e, f, g, h, a, b, c, 61, 0xa4506ceb);
-	SHA256_STEP(c, d, e, f, g, h, a, b, 62, 0xbef9a3f7);
-	SHA256_STEP(b, c, d, e, f, g, h, a, 63, 0xc67178f2);
-	exit(0);
-	*/
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 16,14, 9, 1, 0, 0xe49b69c1);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 17,15,10, 2, 1, 0xefbe4786);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 18,16,11, 3, 2, 0x0fc19dc6);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 19,17,12, 4, 3, 0x240ca1cc);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 20,18,13, 5, 4, 0x2de92c6f);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 21,19,14, 6, 5, 0x4a7484aa);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 22,20,15, 7, 6, 0x5cb0a9dc);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 23,21,16, 8, 7, 0x76f988da);
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 24,22,17, 9, 8, 0x983e5152);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 25,23,18,10, 9, 0xa831c66d);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 26,24,19,11,10, 0xb00327c8);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 27,25,20,12,11, 0xbf597fc7);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 28,26,21,13,12, 0xc6e00bf3);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 29,27,22,14,13, 0xd5a79147);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 30,28,23,15,14, 0x06ca6351);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 31,29,24,16,15, 0x14292967);
-
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 16,30,25,17,16, 0x27b70a85);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 17,31,26,18,17, 0x2e1b2138);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 18,16,27,19,18, 0x4d2c6dfc);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 19,17,28,20,19, 0x53380d13);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 20,18,29,21,20, 0x650a7354);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 21,19,30,22,21, 0x766a0abb);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 22,20,31,23,22, 0x81c2c92e);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 23,21,16,24,23, 0x92722c85);
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 24,22,17,25,24, 0xa2bfe8a1);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 25,23,18,26,25, 0xa81a664b);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 26,24,19,27,26, 0xc24b8b70);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 27,25,20,28,27, 0xc76c51a3);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 28,26,21,29,28, 0xd192e819);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 29,27,22,30,29, 0xd6990624);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 30,28,23,31,30, 0xf40e3585);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 31,29,24,16,31, 0x106aa070);
-
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 16,30,25,17,16, 0x19a4c116);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 17,31,26,18,17, 0x1e376c08);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 18,16,27,19,18, 0x2748774c);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 19,17,28,20,19, 0x34b0bcb5);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 20,18,29,21,20, 0x391c0cb3);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 21,19,30,22,21, 0x4ed8aa4a);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 22,20,31,23,22, 0x5b9cca4f);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 23,21,16,24,23, 0x682e6ff3);
-	_SHA256_STEP(a,b,c,d,e,f,g,h, 24,22,17,25,24, 0x748f82ee);
-	_SHA256_STEP(h,a,b,c,d,e,f,g, 25,23,18,26,25, 0x78a5636f);
-	_SHA256_STEP(g,h,a,b,c,d,e,f, 26,24,19,27,26, 0x84c87814);
-	_SHA256_STEP(f,g,h,a,b,c,d,e, 27,25,20,28,27, 0x8cc70208);
-	_SHA256_STEP(e,f,g,h,a,b,c,d, 28,26,21,29,28, 0x90befffa);
-	_SHA256_STEP(d,e,f,g,h,a,b,c, 29,27,22,30,29, 0xa4506ceb);
-	_SHA256_STEP(c,d,e,f,g,h,a,b, 30,28,23,31,30, 0xbef9a3f7);
-	_SHA256_STEP(b,c,d,e,f,g,h,a, 31,29,24,16,31, 0xc67178f2);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  0,14, 9, 1, 0x19a4c116);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  1,15,10, 2, 0x1e376c08);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f,  2, 0,11, 3, 0x2748774c);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e,  3, 1,12, 4, 0x34b0bcb5);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d,  4, 2,13, 5, 0x391c0cb3);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c,  5, 3,14, 6, 0x4ed8aa4a);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b,  6, 4,15, 7, 0x5b9cca4f);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a,  7, 5, 0, 8, 0x682e6ff3);
+	SHA256_STEP_R(a,b,c,d,e,f,g,h,  8, 6, 1, 9, 0x748f82ee);
+	SHA256_STEP_R(h,a,b,c,d,e,f,g,  9, 7, 2,10, 0x78a5636f);
+	SHA256_STEP_R(g,h,a,b,c,d,e,f, 10, 8, 3,11, 0x84c87814);
+	SHA256_STEP_R(f,g,h,a,b,c,d,e, 11, 9, 4,12, 0x8cc70208);
+	SHA256_STEP_R(e,f,g,h,a,b,c,d, 12,10, 5,13, 0x90befffa);
+	SHA256_STEP_R(d,e,f,g,h,a,b,c, 13,11, 6,14, 0xa4506ceb);
+	SHA256_STEP_R(c,d,e,f,g,h,a,b, 14,12, 7,15, 0xbef9a3f7);
+	SHA256_STEP_R(b,c,d,e,f,g,h,a, 15,13, 8, 0, 0xc67178f2);
 
 	if (sha256_flags & SHA256_RELOAD) {
 		__m128i *p = (__m128i *)out;
-		a = _mm_add_epi32 (a, p[0]);
-		b = _mm_add_epi32 (b, p[1]);
-		c = _mm_add_epi32 (c, p[2]);
-		d = _mm_add_epi32 (d, p[3]);
-		e = _mm_add_epi32 (e, p[4]);
-		f = _mm_add_epi32 (f, p[5]);
-		g = _mm_add_epi32 (g, p[6]);
-		h = _mm_add_epi32 (h, p[7]);
+		a = _mm_add_epi32 (a, p[0]); b = _mm_add_epi32 (b, p[1]);
+		c = _mm_add_epi32 (c, p[2]); d = _mm_add_epi32 (d, p[3]);
+		e = _mm_add_epi32 (e, p[4]); f = _mm_add_epi32 (f, p[5]);
+		g = _mm_add_epi32 (g, p[6]); h = _mm_add_epi32 (h, p[7]);
 	} else {
 		if (sha256_flags & SHA256_CRYPT_SHA224) {
-			// SHA-224 IV
+			/* SHA-224 IV */
 			a = _mm_add_epi32 (a, _mm_set1_epi32 (0xc1059ed8));
 			b = _mm_add_epi32 (b, _mm_set1_epi32 (0x367cd507));
 			c = _mm_add_epi32 (c, _mm_set1_epi32 (0x3070dd17));
@@ -1787,7 +1675,7 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 			g = _mm_add_epi32 (g, _mm_set1_epi32 (0x64f98fa7));
 			h = _mm_add_epi32 (h, _mm_set1_epi32 (0xbefa4fa4));
 		} else {
-			// SHA-256 IV
+			/* SHA-256 IV */
 			a = _mm_add_epi32 (a, _mm_set1_epi32 (0x6a09e667));
 			b = _mm_add_epi32 (b, _mm_set1_epi32 (0xbb67ae85));
 			c = _mm_add_epi32 (c, _mm_set1_epi32 (0x3c6ef372));
@@ -1799,46 +1687,23 @@ void SSESHA256body(__m128i *data, ARCH_WORD_32 *out, int sha256_flags)
 		}
 	}
 
-#if JIMF_DBG
-	printf ("a    %08x %08x %08x %08x\n", ((uint32_t*)&(a))[0], ((uint32_t*)&(a))[1], ((uint32_t*)&(a))[2], ((uint32_t*)&(a))[3]);
-	printf ("b    %08x %08x %08x %08x\n", ((uint32_t*)&(b))[0], ((uint32_t*)&(b))[1], ((uint32_t*)&(b))[2], ((uint32_t*)&(b))[3]);
-	printf ("c    %08x %08x %08x %08x\n", ((uint32_t*)&(c))[0], ((uint32_t*)&(c))[1], ((uint32_t*)&(c))[2], ((uint32_t*)&(c))[3]);
-
-	printf ("\n");
-	{
-		int i;
-		for (i = 0; i < 16; ++i)
-			printf ("w%02d  %08x %08x %08x %08x\n", i, *(uint32_t*)&(w[i]), ((uint32_t*)&(w[i]))[1], ((uint32_t*)&(w[i]))[2], ((uint32_t*)&(w[i]))[3]);
-	}
-	printf ("\n");
-	printf ("s15  %08x %08x %08x %08x\n", saved_key[15], saved_key[16+15], saved_key[32+15], saved_key[48+15]);
-
-#if JIMF_DBG==2
-	exit(0);
-#endif
-#endif
 	if (sha256_flags & SHA256_SWAP_FINAL) {
-		// NOTE, if we swap OUT of BE into proper LE, then this can not be
-		// used in a sha256_flags&SHA256_RELOAD manner, without swapping back into BE format.
-		// NORMALLY, a format will switch binary values into BE format at start, and then
-		// just take the 'normal' non swapped output of this function (i.e. keep it in BE)
+		/* NOTE, if we swap OUT of BE into proper LE, then this can not be
+		 * used in a sha256_flags&SHA256_RELOAD manner, without swapping back into BE format.
+		 * NORMALLY, a format will switch binary values into BE format at start, and then
+		 * just take the 'normal' non swapped output of this function (i.e. keep it in BE) */
 		SWAP_ENDIAN (a); SWAP_ENDIAN (b); SWAP_ENDIAN (c); SWAP_ENDIAN (d);
 		SWAP_ENDIAN (e); SWAP_ENDIAN (f); SWAP_ENDIAN (g); SWAP_ENDIAN (h);
 	}
-
-	// We store the MMX_mixed values.
-	_mm_store_si128 ((__m128i *)&(out[0]), a);
-	_mm_store_si128 ((__m128i *)&(out[4]), b);
-	_mm_store_si128 ((__m128i *)&(out[8]), c);
-	_mm_store_si128 ((__m128i *)&(out[12]), d);
-	_mm_store_si128 ((__m128i *)&(out[16]), e);
-	_mm_store_si128 ((__m128i *)&(out[20]), f);
-	_mm_store_si128 ((__m128i *)&(out[24]), g);
-	_mm_store_si128 ((__m128i *)&(out[28]), h);
+	/* We store the MMX_mixed values.  This will be in proper 'mixed' format, in BE
+	 * format (i.e. correct to reload on a subsquent call), UNLESS, swapped in the prior
+	 * if statement (the SHA256_SWAP_FINAL) */
+	_mm_store_si128 ((__m128i *)&(out[ 0]), a); _mm_store_si128 ((__m128i *)&(out[ 4]), b);
+	_mm_store_si128 ((__m128i *)&(out[ 8]), c); _mm_store_si128 ((__m128i *)&(out[12]), d);
+	_mm_store_si128 ((__m128i *)&(out[16]), e); _mm_store_si128 ((__m128i *)&(out[20]), f);
+	_mm_store_si128 ((__m128i *)&(out[24]), g); _mm_store_si128 ((__m128i *)&(out[28]), h);
 }
-
 
 void SSESHA512body(__m128i* data, unsigned int * out, int init) {
-}
-void SSESHA512body_flat(ARCH_WORD_64 (*saved_key)[16], ARCH_WORD_64 *crypt_key, int init) {
+	/* TODO */
 }
