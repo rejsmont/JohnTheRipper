@@ -17,7 +17,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 /* #include "brg_endian.h" */
 #include "KeccakF-1600-opt64-settings.h"
 #include "KeccakF-1600-interface.h"
-#include "memdbg.h"
+//#include "memdbg.h" FIXME: This does not work here
 
 typedef unsigned char UINT8;
 typedef unsigned long long int UINT64;
