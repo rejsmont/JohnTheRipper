@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#ifndef __DJGPP__
+#if !defined (__DJGPP__) && !defined (_MSC_VER)
 #include <sys/wait.h>
 #endif
 
@@ -500,7 +500,7 @@ static void john_omp_init(void)
 
 static void john_fork(void)
 {
-#ifdef __DJGPP__
+#if defined (__DJGPP__) || defined (_MSC_VER)
 	fputs("Warning: --fork is not supported in this build, "
 	    "will run one process\n", stderr);
 #else
@@ -553,7 +553,7 @@ static void john_fork(void)
 
 static void john_wait(void)
 {
-#ifndef __DJGPP__
+#if !defined __DJGPP__ && !defined (_MSC_VER)
 	int waiting_for = john_child_count;
 
 	log_event("Waiting for %d child%s to terminate",
