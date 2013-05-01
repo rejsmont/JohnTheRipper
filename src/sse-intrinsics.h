@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include "sse-intrinsics-load-flags.h"
 
 #ifndef _EMMINTRIN_H_INCLUDED
 #define __m128i void
@@ -93,8 +94,7 @@ void SSESHA1body(__m128i* data, unsigned int * out, unsigned int * reload_state,
 
 #ifdef MMX_COEF_SHA256
 #define SHA256_ALGORITHM_NAME	"128/128 " SIMD_TYPE " intrinsics " STRINGIZE(MMX_COEF_SHA256)"x"
-void SSESHA256body(__m128i* data, unsigned int * out, int init);
-void SSESHA256body_Flat(ARCH_WORD_32 (*saved_key)[64], ARCH_WORD_32 *crypt_key[8], int init);
+void SSESHA256body(__m128i* data, ARCH_WORD_32 *crypt_key, int sha256_flags);
 #endif
 
 #ifdef MMX_COEF_SHA512
