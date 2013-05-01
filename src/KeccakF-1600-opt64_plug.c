@@ -180,10 +180,10 @@ ALIGN const UINT64 rot_39_41[2] = {39, 41};
 
 void KeccakPermutationOnWords(UINT64 *state)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -198,11 +198,11 @@ void KeccakPermutationOnWords(UINT64 *state)
 
 void KeccakPermutationOnWordsAfterXoring(UINT64 *state, const UINT64 *input, unsigned int laneCount)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
-	unsigned int j;
+    unsigned int j;
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -220,10 +220,10 @@ void KeccakPermutationOnWordsAfterXoring(UINT64 *state, const UINT64 *input, uns
 #ifdef ProvideFast576
 void KeccakPermutationOnWordsAfterXoring576bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -240,10 +240,10 @@ void KeccakPermutationOnWordsAfterXoring576bits(UINT64 *state, const UINT64 *inp
 #ifdef ProvideFast832
 void KeccakPermutationOnWordsAfterXoring832bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -260,10 +260,10 @@ void KeccakPermutationOnWordsAfterXoring832bits(UINT64 *state, const UINT64 *inp
 #ifdef ProvideFast1024
 void KeccakPermutationOnWordsAfterXoring1024bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -280,10 +280,10 @@ void KeccakPermutationOnWordsAfterXoring1024bits(UINT64 *state, const UINT64 *in
 #ifdef ProvideFast1088
 void KeccakPermutationOnWordsAfterXoring1088bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -300,10 +300,10 @@ void KeccakPermutationOnWordsAfterXoring1088bits(UINT64 *state, const UINT64 *in
 #ifdef ProvideFast1152
 void KeccakPermutationOnWordsAfterXoring1152bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
@@ -320,10 +320,10 @@ void KeccakPermutationOnWordsAfterXoring1152bits(UINT64 *state, const UINT64 *in
 #ifdef ProvideFast1344
 void KeccakPermutationOnWordsAfterXoring1344bits(UINT64 *state, const UINT64 *input)
 {
-    declareABCDE
 #if (Unrolling != 24)
     unsigned int i;
 #endif
+    declareABCDE
 
     /* unused in some builds - mute warnings */
     (void)Bmu;
