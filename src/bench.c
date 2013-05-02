@@ -45,6 +45,7 @@
 #include "signals.h"
 #include "formats.h"
 #include "bench.h"
+#include "john.h"
 
 #ifndef _JOHN_BENCH_TMP
 #include "options.h"
@@ -377,6 +378,7 @@ int benchmark_all(void)
 #endif
 
 	if (!benchmark_time) {
+		if (john_main_process)
 		puts("Warning: doing quick benchmarking - "
 		    "the performance numbers will be inaccurate");
 #if defined(HAVE_OPENCL) || defined(HAVE_CUDA)
@@ -407,11 +409,13 @@ int benchmark_all(void)
 				continue;
 			else {
 				if (format->params.flags & FMT_UNICODE) {
-					printf("The %s format does not yet support encodings other than ISO-8859-1\n\n", format->params.label);
+					if (john_main_process)
+						printf("The %s format does not yet support encodings other than ISO-8859-1\n\n", format->params.label);
 					continue;
 				}
 				else {
-					printf("The %s format does not use internal charset conversion (--encoding option).\n\n", format->params.label);
+					if (john_main_process)
+						printf("The %s format does not use internal charset conversion (--encoding option).\n\n", format->params.label);
 					continue;
 				}
 			}
@@ -442,6 +446,9 @@ int benchmark_all(void)
 		ompt = omp_get_max_threads();
 #endif /* _OPENMP */
 
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		printf("Benchmarking: %s%s [%s]%s... ",
 			format->params.format_name,
 			format->params.benchmark_comment,
@@ -454,24 +461,29 @@ int benchmark_all(void)
 		fflush(stdout);
 
 #ifdef HAVE_MPI
-		if (mpi_p > 1) {
-			printf("(%uxMPI", mpi_p);
+		if (john_main_process) {
+			if (mpi_p > 1) {
+				printf("(%uxMPI", mpi_p);
 #ifdef _OPENMP
-			if (format->params.flags & FMT_OMP) {
-				if (ompt > 1)
-					printf(", %dxOMP", ompt);
+				if (format->params.flags & FMT_OMP) {
+					if (ompt > 1)
+						printf(", %dxOMP", ompt);
+				}
+#endif /* _OPENMP */
+				printf(") ");
+#ifdef _OPENMP
+			} else {
+				if (format->params.flags & FMT_OMP && ompt > 1)
+					printf("(%dxOMP) ", ompt);
+#endif /* _OPENMP */
 			}
-#endif /* _OPENMP */
-			printf(") ");
-#ifdef _OPENMP
-		} else {
-			if (format->params.flags & FMT_OMP && ompt > 1)
-				printf("(%dxOMP) ", ompt);
-#endif /* _OPENMP */
+			fflush(stdout);
 		}
-		fflush(stdout);
 #else /* HAVE_MPI */
 #ifdef _OPENMP
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		if (format->params.flags & FMT_OMP && ompt > 1)
 			printf("(%dxOMP) ", ompt);
 		fflush(stdout);
@@ -515,6 +527,9 @@ int benchmark_all(void)
 			goto next;
 		}
 
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		puts("DONE");
 #ifdef _OPENMP
 		// reset this in case format capped it (we may be running more formats)
@@ -530,20 +545,32 @@ int benchmark_all(void)
 		benchmark_cps(&results_m.crypts, results_m.real, s_real);
 		benchmark_cps(&results_m.crypts, results_m.virtual, s_virtual);
 #if !defined(__DJGPP__) && !defined(__BEOS__) && !defined(__MINGW32__) && !defined (_MSC_VER)
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		printf("%s:\t%s c/s real, %s c/s virtual\n",
 			msg_m, s_real, s_virtual);
 #else
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		printf("%s:\t%s c/s\n",
 			msg_m, s_real);
 #endif
 
 		if (!msg_1) {
+#ifdef HAVE_MPI
+			if (john_main_process)
+#endif
 			putchar('\n');
 			goto next;
 		}
 
 		benchmark_cps(&results_1.crypts, results_1.real, s_real);
 		benchmark_cps(&results_1.crypts, results_1.virtual, s_virtual);
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 #if !defined(__DJGPP__) && !defined(__BEOS__) && !defined(__MINGW32__) && !defined (_MSC_VER)
 		printf("%s:\t%s c/s real, %s c/s virtual\n\n",
 			msg_1, s_real, s_virtual);
@@ -557,10 +584,19 @@ next:
 		MEMDBG_checkSnapshot_possible_exit_on_error(memHand, 0);
 	} while ((format = format->next) && !event_abort);
 
+#ifdef HAVE_MPI
+	if (john_main_process) {
+#endif
 	if (failed && total > 1 && !event_abort)
 		printf("%u out of %u tests have FAILED\n", failed, total);
 	else if (total > 1 && !event_abort)
+#ifdef HAVE_MPI
+		if (john_main_process)
+#endif
 		printf("All %u formats passed self-tests!\n", total);
+#ifdef HAVE_MPI
+	}
+#endif
 
 	return failed || event_abort;
 }
