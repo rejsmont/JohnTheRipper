@@ -23,6 +23,7 @@
 #include "external.h"
 #include "options.h"
 #include "unicode.h"
+#include "john.h"
 #include "memdbg.h"
 
 #ifdef index

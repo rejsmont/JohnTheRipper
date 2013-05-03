@@ -25,6 +25,7 @@
 #include "signals.h"
 #include "recovery.h"
 #include "status.h"
+#include "john.h"
 #include "memdbg.h"
 
 #define LOG_SIZE 1024*16
