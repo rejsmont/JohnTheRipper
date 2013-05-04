@@ -13,7 +13,7 @@
 #ifdef _OPENMP
 static int omp_t = 1;
 #include <omp.h>
-#define OMP_SCALE               1 // FIXME
+#define OMP_SCALE               16 // tuned on i7 w/HT
 #endif
 
 #include "md5.h"
