@@ -211,7 +211,7 @@ BENCH_OBJS = \
 	$(BENCH_MD5_OBJS_DEPEND) \
 	$(BENCH_BF_OBJS_DEPEND) \
 	bench-t.o best.o common.o config_g.o formats_g.o math.o memory.o \
-	miscnl.o params.o path.o signals_g.o tty.o
+	miscnl.o params.o path.o signals_g.o tty.o memdbg.o
 
 PARA_BENCH_32_OBJS = \
 	bench-t.o para-best.o common.o config_g.o formats_g.o math.o memory.o \
