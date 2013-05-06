@@ -545,8 +545,10 @@ void do_incremental_crack(struct db_main *db, char *mode)
 		error();
 	}
 
+#if CHARSET_SIZE < 0xff
 	if (header->count > CHARSET_SIZE)
 		inc_format_error(charset);
+#endif
 
 	check =
 		(unsigned int)header->check[0] |
@@ -570,7 +572,7 @@ void do_incremental_crack(struct db_main *db, char *mode)
 	}
 
 /* Sanity-check and expand allchars */
-	real_min = CHARSET_MIN; real_size = CHARSET_SIZE;
+	real_minc = CHARSET_MIN; real_size = CHARSET_SIZE;
 	allchars[header->count] = 0;
 	if (expand(allchars, "", sizeof(allchars)))
 		inc_format_error(charset);
