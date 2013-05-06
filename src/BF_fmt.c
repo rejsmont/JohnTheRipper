@@ -16,10 +16,10 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"bf"
-#define FORMAT_NAME			"OpenBSD Blowfish"
+#define FORMAT_LABEL			"bcrypt"
+#define FORMAT_NAME			""
 
-#define BENCHMARK_COMMENT		" (x32)"
+#define BENCHMARK_COMMENT		" (\"$2a$05\", 32 iterations)"
 #define BENCHMARK_LENGTH		-1
 
 #define PLAINTEXT_LENGTH		72

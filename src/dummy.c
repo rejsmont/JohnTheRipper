@@ -10,7 +10,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"dummy"
-#define FORMAT_NAME			"dummy"
+#define FORMAT_NAME			""
 #define ALGORITHM_NAME			"N/A"
 
 #define BENCHMARK_COMMENT		""

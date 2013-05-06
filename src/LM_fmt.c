@@ -13,8 +13,8 @@
 #include "formats.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"lm"
-#define FORMAT_NAME			"LM DES"
+#define FORMAT_LABEL			"LM"
+#define FORMAT_NAME			""
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1
@@ -205,7 +205,7 @@ struct fmt_main fmt_LM = {
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 #if DES_bs_mt
-		FMT_OMP |
+		FMT_OMP | FMT_OMP_BAD |
 #endif
 		FMT_8_BIT | FMT_BS | FMT_SPLIT_UNIFIES_CASE,
 		tests

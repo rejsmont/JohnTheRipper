@@ -21,8 +21,8 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"md5"
-#define FORMAT_NAME			"crypt-MD5"
+#define FORMAT_LABEL			"md5crypt"
+#define FORMAT_NAME			""
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1
