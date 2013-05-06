@@ -250,6 +250,9 @@ static void print_usage(char *name)
 	int i, dynamics = 0;
 	char **formats_list;
 
+	if (!john_main_process)
+		exit(0);
+
 	i = 1;
 	format = fmt_list;
 	while ((format = format->next))
@@ -408,11 +411,7 @@ void opt_init(char *name, int argc, char **argv, int show_usage)
 
 	if (options.flags & FLG_RESTORE_CHK) {
 		char *rec_name_orig = rec_name;
-#ifndef HAVE_MPI
-		rec_restore_args(1);
-#else
-		rec_restore_args(!mpi_id);
-#endif
+		rec_restore_args(john_main_process ? 1 : 2);
 #ifndef HAVE_MPI
 		if (options.fork) {
 #else
@@ -548,7 +547,7 @@ void opt_init(char *name, int argc, char **argv, int show_usage)
 		    options.node_count)
 			msg = "node numbers can't span the whole range";
 		if (msg) {
-			//if (john_main_process)
+			if (john_main_process)
 			fprintf(stderr, "Invalid node specification: %s: %s\n",
 			    options.node_str, msg);
 			error();
