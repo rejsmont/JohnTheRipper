@@ -223,7 +223,7 @@ PARA_BENCH_OBJS = \
 	miscnl.o params.o path.o signals_g.o tty.o $(BENCH_PARA_DEPEND)
 
 BENCH_PARA_DEPEND = \
-	sse-intrinsics.o rawMD4_fmt_plug.o rawMD5_fmt_plug.o rawSHA1_fmt_plug.o MD5_fmt.o MD5_std.o
+	sse-intrinsics.o rawMD4_fmt_plug.o rawMD5_fmt_plug.o rawSHA1_fmt_plug.o MD5_fmt.o MD5_std.o memdbg.o
 
 GENMKVPWD_OBJS = \
 	genmkvpwd.o mkvlib.o memory.o miscnl.o path.o memdbg.o
