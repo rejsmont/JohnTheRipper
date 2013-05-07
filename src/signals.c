@@ -5,9 +5,6 @@
  * ...with changes in the jumbo patch for mingw and MSC, by JimF.
  */
 
-#ifdef HAVE_MPI
-#include "john-mpi.h"
-#endif
 #if defined (__MINGW32__) || defined (_MSC_VER)
 #define __CYGWIN32__
 #define SIGALRM SIGFPE
@@ -56,11 +53,8 @@
 #include "bench.h"
 #include "john.h"
 #include "status.h"
-#if !OS_TIMER
-#include <time.h>
-#if !defined (__MINGW32__) && !defined (_MSC_VER)
-#include <sys/times.h>
-#endif
+#ifdef HAVE_MPI
+#include "john-mpi.h"
 #endif
 #include "memdbg.h"
 
