@@ -8,15 +8,17 @@
 #define _POSIX_SOURCE /* for fileno(3) */
 #include <stdio.h>
 #include <sys/stat.h>
-#ifdef _MSC_VER
-#pragma warning ( disable : 4996 )
-#else
+#include "os.h"
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_STRINGS_H
 #include <strings.h>
 #endif
 #include <string.h>
 
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 #include "win32_memmap.h"
 #undef MEM_FREE
 #endif
@@ -303,7 +305,7 @@ void do_wordlist_crack(struct db_main *db, char *name, int rules)
 	long file_len;
 	int i, pipe_input = 0, max_pipe_words = 0, rules_keep = 0;
 	int init_once = 1;
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 	IPC_Item *pIPC=NULL;
 #endif
 	char msg_buf[128];
@@ -611,7 +613,7 @@ skip:
 			log_event("- Reading candidate passwords from stdin");
 		} else {
 			pipe_input = 1;
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 			if (db->options->sharedmemoryfilename != NULL) {
 				init_sharedmem(db->options->sharedmemoryfilename);
 				rules_keep = rules;
@@ -632,7 +634,7 @@ skip:
 			rules_keep = rules;
 
 GRAB_NEXT_PIPE_LOAD:;
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 			if (db->options->sharedmemoryfilename != NULL)
 				goto MEM_MAP_LOAD;
 #endif
@@ -685,7 +687,7 @@ GRAB_NEXT_PIPE_LOAD:;
 				sprintf(msg_buf, "- Read block of %d candidate passwords from pipe", nWordFileLines);
 				log_event("%s", msg_buf);
 			}
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 			goto SKIP_MEM_MAP_LOAD;
 MEM_MAP_LOAD:;
 			{
@@ -916,7 +918,7 @@ next_word:
 		if (ferror(word_file))
 			break;
 
-#if defined (_MSC_VER) || defined (__MINGW32__) || defined (__CYGWIN32__)
+#if HAVE_WINDOWS_H
 EndOfFile:
 #endif
 		if (rules) {

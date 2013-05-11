@@ -26,10 +26,6 @@
 #endif
 #include "memdbg.h"
 
-#ifdef _MSC_VER
-#define atoll (unsigned long long)_atoi64
-#endif
-
 #define FORMAT_LABEL		"keepass"
 #define FORMAT_NAME		"KeePass SHA-256 AES"
 #define ALGORITHM_NAME		"32/" ARCH_BITS_STR " " SHA2_LIB
