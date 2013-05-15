@@ -14,8 +14,8 @@
 #include "opencl_DES_bs.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"des-opencl"
-#define FORMAT_NAME			"Traditional DES"
+#define FORMAT_LABEL			"descrypt-opencl"
+#define FORMAT_NAME			"traditional crypt(3)"
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		0
