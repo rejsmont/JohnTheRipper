@@ -41,13 +41,9 @@
 #define BINARY_SIZE			MD5_BINARY_SIZE
 
 #define SALT_SIZE			2
-#define PROCESSED_SALT_SIZE	SALT_SIZE
 
 #define PLAINTEXT_LENGTH	32
 #define CIPHERTEXT_LENGTH	(1 + 3 + 1 + SALT_SIZE * 2 + 1 + MD5_HEX_SIZE)
-
-#define MIN_KEYS_PER_CRYPT	1
-#define MAX_KEYS_PER_CRYPT	1
 
 static struct fmt_tests osc_tests[] = {
 	{"$OSC$2020$05de5c963ee6234dc7d52f7589a1922b", "welcome"},
@@ -95,19 +91,7 @@ static char *our_split(char *ciphertext, int index, struct fmt_main *self)
 
 static char *our_prepare(char *split_fields[10], struct fmt_main *self)
 {
-	int i = strlen(split_fields[1]);
 	get_ptr();
-	/* this 'special' code added to do a 'DEEP' test of hashes which have lost their salts */
-	/* in this type run, we load the passwords, then run EVERY salt against them, as though*/
-	/* all of the hashes were available for ALL salts. We also only want 1 salt            */
-	if (options.regen_lost_salts == 2 && i == 32) {
-		char *Ex = mem_alloc_tiny(CIPHERTEXT_LENGTH+1, MEM_ALIGN_NONE);
-		// add a 'garbage' placeholder salt to this candidate. However, we want ALL of them to
-		// be setup as the exact same salt (so that all candidate get dumped into one salt block.
-		// We use '   ' as the salt (3 spaces).
-		sprintf(Ex, "$OSC$2020$%s", split_fields[1]);
-		return Ex;
-	}
 	return pDynamic_4->methods.prepare(split_fields, self);
 }
 
@@ -119,15 +103,6 @@ static int osc_valid(char *ciphertext, struct fmt_main *self)
 
 	get_ptr();
 	i = strlen(ciphertext);
-	/* this 'special' code added to do a 'DEEP' test of hashes which have lost their salts */
-	/* in this type run, we load the passwords, then run EVERY salt against them, as though*/
-	/* all of the hashes were available for ALL salts. We also only want 1 salt            */
-	if (options.regen_lost_salts == 2 && i == 32) {
-		static char Ex[CIPHERTEXT_LENGTH+1];
-		sprintf(Ex, "$OSC$2020$%s", ciphertext);
-		ciphertext = Ex;
-		i = CIPHERTEXT_LENGTH;
-	}
 
 	if (i != CIPHERTEXT_LENGTH) {
 		return pDynamic_4->methods.valid(ciphertext, pDynamic_4);

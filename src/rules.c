@@ -239,10 +239,16 @@ static void rules_init_class(char name, char *valid)
 	}
 }
 
-static char *userclass_expand(const char *src)
+/* function used in fake_salts.c, to load user class data from john.conf   */
+/* note there 'used' to be a very nasty thing in this function, where we   */
+/* modified the data contents of our const src input param. This has been  */
+/* changed, so we have a separate buffer to memcpy to, instead of blasting */
+/* a buffer that we had assured would not be destroyed.  Also unneeded     */
+/* allocation was removed  (JimF, 2013)                                    */
+char *userclass_expand(const char *src)
 {
-	unsigned const char *src2 = (unsigned char*)src;
-	char *dst_tmp = mem_alloc(0x200);
+	unsigned char _src2[0x100], *src2=_src2, dst_seen[0x100];
+	char dst_tmp[0x200];
 	char *dst = dst_tmp, *dstend = &dst_tmp[0x100];
 	int j, br = 0;
 
@@ -261,14 +267,17 @@ static char *userclass_expand(const char *src)
 	dst = dst_tmp;
 
 	// pass 2: parse ranges between brackets
+	memset(dst_seen, 0, sizeof(dst_seen));
 	while(*src2 && dst < dstend) {
 		if (*src2 == '\\') {
 			if (src2[1]) {
-				*dst++ = *++src2;
-				src2++;
+				if (dst_seen[src2[1]] == 0) {
+					*dst++ = src2[1];
+					dst_seen[src2[1]] = 1;
+				}
+				src2 += 2;
 				continue;
 			} else {
-				MEM_FREE(dst_tmp);
 				return NULL;
 			}
 		}
@@ -286,26 +295,41 @@ static char *userclass_expand(const char *src)
 				continue;
 			}
 			if (*src2 == '-' && src2[1] && src2[1] != ']') {
-				if (src2[-1] < src2[1])
-					for (j=src2[-1] + 1; j < src2[1]; j++)
-						*dst++ = j;
-				else
-					for (j=src2[-1] - 1; j > src2[1]; j--)
-						*dst++ = j;
-				*dst++ = *++src2;
-				src2++;
+				if (src2[-1] < src2[1]) {
+					for (j=src2[-1] + 1; j < src2[1]; j++) {
+						if (dst_seen[j] == 0) {
+							*dst++ = j;
+							dst_seen[j] = 1;
+						}
+					}
+				} else {
+					for (j=src2[-1] - 1; j > src2[1]; j--) {
+						if (dst_seen[j] == 0) {
+							*dst++ = j;
+							dst_seen[j] = 1;
+						}
+					}
+				}
+				++src2;
+				if (dst_seen[*src2] == 0) {
+					*dst++ = *src2;
+					dst_seen[*src2] = 1;
+				}
+				++src2;
 				continue;
 			}
 		}
-		*dst++ = *src2++;
+		if (dst_seen[*src2] == 0) {
+			*dst++ = *src2;
+			dst_seen[*src2] = 1;
+		}
+		++src2;
 	}
 	*dst = 0;
 	if (br) {
-		MEM_FREE(dst_tmp);
 		return NULL;
 	}
 	dst = str_alloc_copy(dst_tmp);
-	MEM_FREE(dst_tmp);
 	return dst;
 }
 

@@ -61,12 +61,8 @@ userName2:$B$107$dd494cb03ac1c5b8f8d2dddafca2f7a6:1552:0::emailaddress@gmail.com
 #define BINARY_SIZE			MD5_BINARY_SIZE
 
 #define SALT_SIZE			9
-#define PROCESSED_SALT_SIZE	SALT_SIZE
 
 #define PLAINTEXT_LENGTH	32
-
-#define MIN_KEYS_PER_CRYPT	1
-#define MAX_KEYS_PER_CRYPT	1
 
 static struct fmt_tests mediawiki_tests[] = {
 	{"$B$113$de2874e33da25313d808d2a8cbf31485",      "qwerty"},
@@ -113,18 +109,7 @@ static char *our_split(char *ciphertext, int index, struct fmt_main *self)
 
 static char *our_prepare(char *split_fields[10], struct fmt_main *self)
 {
-	int i = strlen(split_fields[1]);
 	get_ptr();
-	/* this 'special' code added to do a 'DEEP' test of hashes which have lost their salts */
-	/* in this type run, we load the passwords, then run EVERY salt against them, as though*/
-	/* all of the hashes were available for ALL salts. We also only want 1 salt            */
-	if ( (options.regen_lost_salts >= 3 && options.regen_lost_salts <= 5) && i == 32) {
-		char *Ex = mem_alloc_tiny((3+options.regen_lost_salts+1+MD5_HEX_SIZE)+1, MEM_ALIGN_NONE);
-		// add a 'garbage' placeholder salt that is the proper 'max' size for salt.  NOTE
-		// the real saltlen is not known at this time. We are simply making sure there is ENOUGH room.
-		sprintf(Ex, "$B$000%s%s$%s", options.regen_lost_salts>3?"0":"", options.regen_lost_salts>4?"0":"", split_fields[1]);
-		return Ex;
-	}
 	return pDynamic_9->methods.prepare(split_fields, self);
 }
 
@@ -139,15 +124,6 @@ static int mediawiki_valid(char *ciphertext, struct fmt_main *self)
 
 
 	i = strlen(ciphertext);
-	/* this 'special' code added to do a 'DEEP' test of hashes which have lost their salts */
-	/* in this type run, we load the passwords, then run EVERY salt against them, as though*/
-	/* all of the hashes were available for ALL salts. We also only want 1 salt            */
-
-	if ( (options.regen_lost_salts >= 3 && options.regen_lost_salts <= 5) && i == 32) {
-		static char Ex[(1+1+1+5+1+MD5_HEX_SIZE)+1];
-		sprintf(Ex, "$B$000%s%s$%s", options.regen_lost_salts>3?"0":"", options.regen_lost_salts>4?"0":"", ciphertext);
-		ciphertext = Ex;
-	}
 
 	if (strncmp(ciphertext, "$B$", 3) != 0) {
 		return pDynamic_9->methods.valid(ciphertext, pDynamic_9);
