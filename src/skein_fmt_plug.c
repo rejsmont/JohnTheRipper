@@ -22,6 +22,8 @@ static int omp_t = 1;
 #define OMP_SCALE               1 // FIXME
 #endif
 
+#include "memdbg.h"
+
 #define FORMAT_LABEL		"skein"
 #define FORMAT_NAME		"Skein"
 #define FORMAT_TAG		"$skein$"
