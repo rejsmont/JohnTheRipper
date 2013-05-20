@@ -51,6 +51,8 @@ static int omp_t = 1;
 #define OMP_SCALE               1
 #endif
 
+#include "memdbg.h"
+
 #define FORMAT_TAG 		"$fde$"
 #define TAG_LENGTH 		5
 #define FORMAT_LABEL		"fde"

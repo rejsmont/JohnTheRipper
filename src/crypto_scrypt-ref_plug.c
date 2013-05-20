@@ -39,6 +39,8 @@
 #include "sysendian.h"
 #include "crypto_scrypt.h"
 
+#include "memdbg.h"
+
 static void blkcpy(uint8_t *, uint8_t *, size_t);
 static void blkxor(uint8_t *, uint8_t *, size_t);
 static void salsa20_8(uint8_t[64]);

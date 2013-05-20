@@ -23,6 +23,8 @@ static int omp_t = 1;
 #define OMP_SCALE               1 // FIXME
 #endif
 
+#include "memdbg.h"
+
 #define FORMAT_LABEL		"scrypt"
 #define FORMAT_NAME		"django-scrypt"
 #define FORMAT_TAG		"scrypt"
