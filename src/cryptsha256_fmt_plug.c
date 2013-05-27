@@ -101,6 +101,8 @@ void main() {
 #include <omp.h>
 #endif
 
+#include "memdbg.h"
+
 // NOTE, in SSE mode, even if NOT in OMP, we may need to scale, quite a bit, due to needing
 // to 'group' passwords differently, so that we have lengths which 'share' the same number
 // of crypt block counts for each 'type'.  We may want to scale as much as 128 or so, just
