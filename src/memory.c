@@ -152,26 +152,48 @@ void *mem_alloc_tiny_func(size_t size, size_t align
 	return p;
 }
 
-void *mem_calloc_tiny(size_t size, size_t align) {
+void *mem_calloc_tiny_func(size_t size, size_t align
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+	) {
+#if defined (MEMDBG_ON)
+	char *cp = (char*)mem_alloc_tiny_func(size, align, file, line);
+#else
 	char *cp = (char*) mem_alloc_tiny(size, align);
+#endif
 	memset(cp, 0, size);
 	return cp;
 }
 
-void *mem_alloc_copy(void *src, size_t size, size_t align)
-{
+void *mem_alloc_copy_func(void *src, size_t size, size_t align
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+	) {
+#if defined (MEMDBG_ON)
+	return memcpy(mem_alloc_tiny_func(size, align, file, line), src, size);
+#else
 	return memcpy(mem_alloc_tiny(size, align), src, size);
+#endif
 }
 
-char *str_alloc_copy(char *src)
-{
+char *str_alloc_copy_func(char *src
+#if defined (MEMDBG_ON)
+	, char *file, int line
+#endif
+	) {
 	size_t size;
 
 	if (!src) return "";
 	if (!*src) return "";
 
 	size = strlen(src) + 1;
+#if defined (MEMDBG_ON)
+	return (char *)memcpy(mem_alloc_tiny_func(size, MEM_ALIGN_NONE, file, line), src, size);
+#else
 	return (char *)memcpy(mem_alloc_tiny(size, MEM_ALIGN_NONE), src, size);
+#endif
 }
 
 void dump_stuff_noeol(void *x, unsigned int size) {
