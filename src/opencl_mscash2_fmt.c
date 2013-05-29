@@ -493,22 +493,22 @@ static int cmp_exact(char *source, int count) {
 
 static char *prepare(char *split_fields[10], struct fmt_main *self) {
 	char 	*cp;
-		
+
 	if (split_fields[0]) {
 	  	if (split_fields[0][0] != '?') {
 			cp = mem_alloc(strlen(split_fields[0]) + strlen(split_fields[1]) + 14) ;
 			sprintf (cp, "$DCC2$10240#%s#%s", split_fields[0], split_fields[1]) ;
 			if (valid(cp, self)) {
 				char *cipher = str_alloc_copy(cp) ;
-				MEM_FREE(cp) ;			
+				MEM_FREE(cp) ;
 				return cipher ;
 			}
 			MEM_FREE(cp);
-			
+
 			return split_fields[1];
 		}
-	}	
-	
+	}
+
 	//If the format is $DCC2$salt#hash
 	if (strncmp(split_fields[1], "$DCC2$10240#", 12)) {
 		char *hash = str_alloc_copy(strrchr(split_fields[1], '#') + 1) ;
@@ -516,27 +516,27 @@ static char *prepare(char *split_fields[10], struct fmt_main *self) {
 		char *pos;
 		int i = 0;
 		cp = mem_alloc(MAX_CIPHERTEXT_LENGTH + 1) ;
-		
+
 		pos = strrchr(split_fields[1],'$') + 1 ;
 		while (pos[i] != '#') {
 			salt[i] = pos[i];
 			i++;
 		}
 		salt[i] = '\0';
-		
+
 		sprintf(cp,"$DCC2$10240#%s#%s",salt,hash);
-		
+
 		MEM_FREE(salt);
 		//MEM_FREE(hash);
 		if(valid(cp,self)) {  return cp;}
-		
+
 		MEM_FREE(cp);
 	}
 
 	if (!strncmp(split_fields[1], "$DCC2$", 6) && valid(split_fields[1], self)){
 		return split_fields[1] ;
 	}
-	
+
 	return split_fields[1] ;
 }
 
