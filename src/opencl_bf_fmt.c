@@ -16,12 +16,12 @@
 #include "config.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"bf-opencl"
-#define FORMAT_NAME			"OpenBSD Blowfish"
+#define FORMAT_LABEL			"bcrypt-opencl"
+#define FORMAT_NAME			""
 
-#define ALGORITHM_NAME			"OpenCL"
+#define ALGORITHM_NAME			"Blowfish OpenCL"
 
-#define BENCHMARK_COMMENT		" (x32)"
+#define BENCHMARK_COMMENT		" (\"$2a$05\", 32 iterations)"
 #define BENCHMARK_LENGTH		-1
 
 #define PLAINTEXT_LENGTH		72
