@@ -26,9 +26,6 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -155,9 +152,8 @@ static int AF_merge(unsigned char *src, unsigned char *dst, int afsize,
 	char *bufblock;
 	int blocksize = afsize / stripes;
 
-	bufblock = alloca(blocksize);
+	bufblock = mem_calloc(blocksize);
 
-	memset(bufblock, 0, blocksize);
 	for (i = 0; i < (stripes - 1); i++) {
 		XORblock((char *) (src + (blocksize * i)), bufblock, bufblock,
 		    blocksize);
@@ -166,6 +162,8 @@ static int AF_merge(unsigned char *src, unsigned char *dst, int afsize,
 	}
 	XORblock((char *) (src + blocksize * (stripes - 1)), bufblock,
 	    (char *) dst, blocksize);
+
+	MEM_FREE(bufblock);
 	return 0;
 }
 
@@ -472,7 +470,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 	{
 		unsigned char keycandidate[255];
 		unsigned char masterkeycandidate[255];
-		unsigned char *af_decrypted = alloca(cur_salt->afsize); // XXX remove alloca
+		unsigned char *af_decrypted = mem_alloc(cur_salt->afsize);
 		char *password = saved_key[index];
 		int iterations = john_ntohl(cur_salt->myphdr.keyblock[cur_salt->bestslot].passwordIterations);
 
@@ -500,7 +498,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 			john_ntohl(cur_salt->myphdr.mkDigestIterations),
 			(unsigned char*)crypt_out[index],
 			LUKS_DIGESTSIZE);
-
+		MEM_FREE(af_decrypted);
 	}
 	return count;
 }
