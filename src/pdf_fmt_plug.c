@@ -587,7 +587,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 	for (index = 0; index < count; index++)
 #endif
 	{
-#ifndef _OPENMP
+#if !defined(_OPENMP) && defined (__CYGWIN32__) && defined (MEMDBG_ON)
 		static  /* work around for some 'unknown' bug in cygwin gcc when using memdbg.h code. I have NO explanation, JimF. */
 #endif
 		unsigned char output[32];
