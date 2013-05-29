@@ -709,11 +709,14 @@ static void john_wait(void)
 static void john_mpi_wait(void)
 {
 	if (!database.password_count)
-		fprintf(stderr, "Node %d: All hashes cracked! Abort remaining"
-		        " nodes manually!\n", mpi_id);
+		fprintf(stderr, "%d: All hashes cracked! Abort remaining"
+		        " nodes manually!\n", mpi_id + 1);
 
-	if (nice(20) < 0) fprintf(stderr, "%d: nice() failed\n", mpi_id + 1);
-	MPI_Barrier(MPI_COMM_WORLD);
+	if (nice(20) < 0)
+		fprintf(stderr, "%d: nice() failed\n", mpi_id + 1);
+
+	if (john_main_process)
+		mpi_teardown();
 
 /* Close and possibly remove our .rec file now */
 	rec_done((children_ok && !event_abort) ? -1 : -2);
@@ -1184,8 +1187,9 @@ static void john_done(void)
 	}
 	log_done();
 #ifdef HAVE_OPENCL
-	//Release OpenCL stuff.
-	clean_opencl_environment();
+	if (!(options.flags & FLG_FORK) || john_main_process)
+		//Release OpenCL stuff.
+		clean_opencl_environment();
 #endif
 
 	path_done();
