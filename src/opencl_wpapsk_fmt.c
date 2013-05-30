@@ -369,7 +369,8 @@ static void init(struct fmt_main *self)
 	HANDLE_CLERROR(clGetKernelWorkGroupInfo(wpapsk_final_sha1, devices[ocl_gpu_id], CL_KERNEL_WORK_GROUP_SIZE, sizeof(maxsize2), &maxsize2, NULL), "Query max work group size");
 	if (maxsize2 < maxsize) maxsize = maxsize2;
 
-	//fprintf(stderr, "Max LWS %lu\n", maxsize);
+	if (options.verbosity > 3)
+		fprintf(stderr, "Max LWS %d\n", (int)maxsize);
 
 	if (local_work_size > maxsize)
 		local_work_size = maxsize;
@@ -404,7 +405,8 @@ static void init(struct fmt_main *self)
 	if (global_work_size < local_work_size)
 		global_work_size = local_work_size;
 
-	fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
+	if (options.verbosity > 2)
+		fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
 	create_clobj(global_work_size, self);
 }
 

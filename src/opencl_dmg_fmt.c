@@ -17,6 +17,7 @@
 #include "arch.h"
 #include "formats.h"
 #include "common.h"
+#include "options.h"
 #include "misc.h"
 #include "common-opencl.h"
 #include "memdbg.h"
@@ -260,7 +261,8 @@ static void init(struct fmt_main *self)
 
 	self->params.min_keys_per_crypt = local_work_size;
 
-	fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
+	if (options.verbosity > 2)
+		fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
 }
 
 static int valid(char *ciphertext, struct fmt_main *self)

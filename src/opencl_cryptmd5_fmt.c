@@ -15,6 +15,7 @@
 #include "path.h"
 #include "config.h"
 #include "common-opencl.h"
+#include "options.h"
 #include "memdbg.h"
 
 #define uint32_t unsigned int
@@ -351,7 +352,8 @@ static void init(struct fmt_main *self)
 	self->params.max_keys_per_crypt = global_work_size;
 	self->methods.crypt_all = crypt_all;
 
-	fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
+	if (options.verbosity > 2)
+		fprintf(stderr, "Local worksize (LWS) %d, Global worksize (GWS) %d\n", (int)local_work_size, (int)global_work_size);
 }
 
 static int valid(char *ciphertext, struct fmt_main *self)

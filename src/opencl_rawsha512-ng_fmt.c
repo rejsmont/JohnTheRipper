@@ -24,6 +24,7 @@
 #include "sha2.h"
 #include "common-opencl.h"
 #include "config.h"
+#include "options.h"
 #include "opencl_rawsha512-ng.h"
 #include "memdbg.h"
 
@@ -248,20 +249,23 @@ static void release_clobj(void) {
 
 /* ------- Salt functions ------- */
 static void * get_salt(char *ciphertext) {
-	static unsigned char out[SALT_SIZE_X];
+	static union {
+		unsigned char c[SALT_SIZE_X];
+		ARCH_WORD dummy;
+	} out;
 	char *p;
 	int i;
 
 	ciphertext += 6;
 	p = ciphertext;
-	for (i = 0; i < sizeof (out); i++) {
-		out[i] =
+	for (i = 0; i < sizeof (out.c); i++) {
+		out.c[i] =
 				(atoi16[ARCH_INDEX(*p)] << 4) |
 				atoi16[ARCH_INDEX(p[1])];
 		p += 2;
 	}
 
-	return out;
+	return out.c;
 }
 
 static void set_salt(void * salt_info) {
@@ -426,8 +430,10 @@ static void init(struct fmt_main * self) {
 	while (global_work_size > gws_limit)
 		global_work_size -= local_work_size;
 
-	fprintf(stderr, "Local worksize (LWS) %zd, global worksize (GWS) %zd\n",
-		   local_work_size, global_work_size);
+	if (options.verbosity > 2)
+		fprintf(stderr,
+		        "Local worksize (LWS) %zd, global worksize (GWS) %zd\n",
+		        local_work_size, global_work_size);
 	self->params.min_keys_per_crypt = local_work_size;
 	self->params.max_keys_per_crypt = global_work_size;
 	self->methods.crypt_all = crypt_all;
