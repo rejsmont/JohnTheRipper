@@ -9,20 +9,19 @@
  *
  */
 
-#include "sha2.h"
-
 #define _GNU_SOURCE
 #include <string.h>
-
-#include "arch.h"
-#include "params.h"
-#include "common.h"
-#include "formats.h"
-
 #ifdef _OPENMP
 #define OMP_SCALE			16
 #include <omp.h>
 #endif
+
+#include "arch.h"
+#include "sha2.h"
+#include "params.h"
+#include "common.h"
+#include "formats.h"
+#include "cryptsha512_valid.h"
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"sha512crypt"
@@ -47,6 +46,8 @@
 
 #define MIN_KEYS_PER_CRYPT		1
 #define MAX_KEYS_PER_CRYPT		1
+
+#define ROUNDS_PREFIX           "rounds="
 
 static struct fmt_tests tests[] = {
 	{"$6$LKO/Ute40T3FNF95$6S/6T2YuOIHY0N3XpLKABJ3soYcXD9mB7uVbtEZDj/LNscVhZoZ9DEH.sBciDrMsHOWOoASbNLTypH/5X26gN0", "U*U*U*U*"},
@@ -90,63 +91,6 @@ static void init(struct fmt_main *self)
 	saved_key_length = mem_calloc_tiny(sizeof(*saved_key_length) * self->params.max_keys_per_crypt, MEM_ALIGN_WORD);
 	saved_key = mem_calloc_tiny(sizeof(*saved_key) * self->params.max_keys_per_crypt, MEM_ALIGN_WORD);
 	crypt_out = mem_calloc_tiny(sizeof(*crypt_out) * self->params.max_keys_per_crypt, MEM_ALIGN_WORD);
-}
-
-static int valid(char *ciphertext, struct fmt_main *self)
-{
-	char *pos, *start;
-
-	if (strncmp(ciphertext, "$6$", 3))
-		return 0;
-
-	ciphertext += 3;
-
-	if (!strncmp(ciphertext, sha512_rounds_prefix,
-	             sizeof(sha512_rounds_prefix) - 1)) {
-		const char *num = ciphertext + sizeof(sha512_rounds_prefix) - 1;
-		char *endp;
-		if (!strtoul(num, &endp, 10))
-			return 0;
-		if (*endp == '$')
-			ciphertext = endp + 1;
-	}
-
-	for (pos = ciphertext; *pos && *pos != '$'; pos++);
-	if (!*pos || pos < ciphertext || pos > &ciphertext[SALT_LENGTH]) return 0;
-
-	start = ++pos;
-	while (atoi64[ARCH_INDEX(*pos)] != 0x7F) pos++;
-	if (*pos || pos - start != CIPHERTEXT_LENGTH) return 0;
-
-	return 1;
-}
-
-#define TO_BINARY(b1, b2, b3) \
-	value = (ARCH_WORD_32)atoi64[ARCH_INDEX(pos[0])] | \
-		((ARCH_WORD_32)atoi64[ARCH_INDEX(pos[1])] << 6) | \
-		((ARCH_WORD_32)atoi64[ARCH_INDEX(pos[2])] << 12) | \
-		((ARCH_WORD_32)atoi64[ARCH_INDEX(pos[3])] << 18); \
-	pos += 4; \
-	out[b1] = value >> 16; \
-	out[b2] = value >> 8; \
-	out[b3] = value;
-
-static void *get_binary(char *ciphertext)
-{
-	static ARCH_WORD_32 outbuf[BINARY_SIZE/4];
-	ARCH_WORD_32 value;
-	char *pos = strrchr(ciphertext, '$') + 1;
-	unsigned char *out = (unsigned char*)outbuf;
-	int i = 0;
-
-	do {
-		TO_BINARY(i, (i+21)%63, (i+42)%63);
-		i = (i+22)%63;
-	} while (i != 21);
-	value = (ARCH_WORD_32)atoi64[ARCH_INDEX(pos[0])] |
-		((ARCH_WORD_32)atoi64[ARCH_INDEX(pos[1])] << 6);
-	out[63] = value;
-	return (void *)out;
 }
 
 static int binary_hash_0(void *binary) { return *(ARCH_WORD_32 *)binary & 0xF; }
