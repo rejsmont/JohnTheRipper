@@ -103,7 +103,7 @@ void main() {
 //#define FMT_OMP 0
 // Well, I tried by turning of OMP, but the run still failed.  So, I will simply
 // leave OMP on, but turn off SSE in an OMP build, until I get this figured out.
-#undef MMX_COEF_SHA256
+//#undef MMX_COEF_SHA256
 #endif
 
 #ifdef _OPENMP
@@ -692,8 +692,8 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 	int index = 0;
 	int *MixOrder, tot_todo;
 
-//	static int times=-1;
-//	++times;
+	static int times=-1;
+	++times;
 
 //	if (times==1) {
 //		printf ("\nKey = %*.*s\n", saved_key_length[0], saved_key_length[0], saved_key[0]);
@@ -706,16 +706,17 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		const int lens[6] = {0,4,8,12,24,36};
 		int j;
 		tot_todo = 0;
-		saved_key_length[count] = 0; // point all 'tail' MMX buffer elements to this location.
+		saved_key_length[max_crypts] = 0; // point all 'tail' MMX buffer elements to this location.
 		for (j = 0; j < 5; ++j) {
 			for (index = 0; index < count; ++index) {
 				if (saved_key_length[index] >= lens[j] && saved_key_length[index] < lens[j+1])
 					MixOrder[tot_todo++] = index;
 			}
 			while (tot_todo & (MMX_COEF_SHA256-1))
-				MixOrder[tot_todo++] = count;
+				MixOrder[tot_todo++] = max_crypts;
 		}
 	}
+	printf ("tot_todo=%d count+5*MMX_COEF_SHA256=%d\n", tot_todo, count+5*MMX_COEF_SHA256);
 #else
 	// no need to mix. just run them one after the next, in any order.
 	MixOrder = mem_alloc(sizeof(int)*count);
@@ -829,11 +830,11 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 			   burn CPU cycles.  */
 			LoadCryptStruct(&crypt_struct, MixOrder[index+idx], idx, p_bytes, s_bytes);
 		}
-		//dump_stuff(&crypt_struct, 2*64*8*BLKS);
+//		if (!index && times == 1)
+//			dump_stuff(&crypt_struct, 2*64*8*BLKS);
 		idx = 0;
 #ifdef MMX_COEF_SHA256
 		for (cnt = 1; ; ++cnt) {
-//			printf ("SHA #%d\n", cnt);
 			if (crypt_struct.datlen[idx]==128) {
 				unsigned char *cp = crypt_struct.bufs[0][idx];
 				SSESHA256body((__m128i *)cp, sse_out, NULL, SSEi_FLAT_IN|SSEi_2BUF_INPUT_FIRST_BLK);
