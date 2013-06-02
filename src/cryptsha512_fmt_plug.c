@@ -21,6 +21,10 @@
 #include "params.h"
 #include "common.h"
 #include "formats.h"
+// these MUST be defined prior to loading cryptsha512_valid.h
+#define BINARY_SIZE			64
+#define SALT_LENGTH			16
+#define CIPHERTEXT_LENGTH		86
 #include "cryptsha512_valid.h"
 #include "memdbg.h"
 
@@ -36,11 +40,8 @@
 #define BENCHMARK_LENGTH		-1
 
 #define PLAINTEXT_LENGTH		125
-#define CIPHERTEXT_LENGTH		86
 
-#define BINARY_SIZE			64
 #define BINARY_ALIGN			4
-#define SALT_LENGTH			16
 #define SALT_SIZE			sizeof(struct saltstruct)
 #define SALT_ALIGN			4
 
