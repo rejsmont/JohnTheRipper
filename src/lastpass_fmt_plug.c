@@ -44,6 +44,9 @@
 #define MAX_KEYS_PER_CRYPT	1
 #endif
 
+#define BINARY_ALIGN		4
+#define SALT_ALIGN		4
+
 static struct fmt_tests lastpass_tests[] = {
 	{"$lp$hackme@mailinator.com$6f5d8cec3615fc9ac7ba2e0569bce4f5", "strongpassword"},
 	{NULL}
@@ -243,9 +246,9 @@ struct fmt_main fmt_lastpass = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
