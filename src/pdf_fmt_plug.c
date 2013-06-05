@@ -31,9 +31,11 @@
 #define BENCHMARK_LENGTH    -1000
 #define PLAINTEXT_LENGTH    32
 #define BINARY_SIZE         0
-#define SALT_SIZE		sizeof(struct custom_salt)
+#define SALT_SIZE           sizeof(struct custom_salt)
 #define MIN_KEYS_PER_CRYPT  1
 #define MAX_KEYS_PER_CRYPT  1
+#define BINARY_ALIGN        1
+#define SALT_ALIGN          4
 
 #if defined (_OPENMP)
 static int omp_t = 1;
@@ -622,9 +624,9 @@ struct fmt_main fmt_pdf = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
