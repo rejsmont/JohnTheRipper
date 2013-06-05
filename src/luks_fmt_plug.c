@@ -66,6 +66,9 @@ static int omp_t = 1;
 #define MIN_KEYS_PER_CRYPT	1
 #define MAX_KEYS_PER_CRYPT	1
 
+#define BINARY_ALIGN		4
+#define SALT_ALIGN		4
+
 #define john_htonl(x) ((((x)>>24) & 0xffL) | (((x)>>8) & 0xff00L) | \
 		(((x)<<8) & 0xff0000L) | (((x)<<24) & 0xff000000L))
 
@@ -544,9 +547,9 @@ struct fmt_main fmt_luks = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
