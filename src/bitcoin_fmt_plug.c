@@ -39,6 +39,8 @@ static int omp_t = 1;
 #define SALT_SIZE		sizeof(struct custom_salt)
 #define MIN_KEYS_PER_CRYPT	1
 #define MAX_KEYS_PER_CRYPT	1
+#define BINARY_ALIGN		1
+#define SALT_ALIGN		4
 
 #define SZ 			128
 
@@ -292,11 +294,11 @@ struct fmt_main fmt_bitcoin = {
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
 #if FMT_MAIN_VERSION > 9
-                DEFAULT_ALIGN,
+                BINARY_ALIGN,
 #endif
 		SALT_SIZE,
 #if FMT_MAIN_VERSION > 9
-                DEFAULT_ALIGN,
+                SALT_ALIGN,
 #endif
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
