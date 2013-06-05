@@ -36,6 +36,9 @@ static int omp_t = 1;
 #define MIN_KEYS_PER_CRYPT	1
 #define MAX_KEYS_PER_CRYPT	1
 
+#define BINARY_ALIGN		4
+#define SALT_ALIGN		4
+
 static struct fmt_tests mongodb_tests[] = {
 	{"$mongodb$0$sa$75692b1d11c072c6c79332e248c4f699", "sa"},
 	{"$mongodb$1$sa$58d3229c83e3f87e$0c85e3f74adce5d037426791940c820a", "sa"},
@@ -273,9 +276,9 @@ struct fmt_main fmt_mongodb = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_SIZE,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
