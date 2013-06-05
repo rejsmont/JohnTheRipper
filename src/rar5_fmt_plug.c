@@ -48,6 +48,9 @@ static int omp_t = 1;
 #define SHA256_DIGEST_SIZE      32
 #define MaxSalt				64
 
+#define BINARY_ALIGN		4
+#define SALT_ALIGN		4
+
 static struct fmt_tests rar5_tests[] = {
 	{"$rar5$16$37526a0922b4adcc32f8fed5d51bb6c8$16$8955617d9b801def51d734095bb8ecdb$8$9f0b23c98ebb3653", "password"},
 	{NULL}
@@ -289,9 +292,9 @@ struct fmt_main fmt_rar5 = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
