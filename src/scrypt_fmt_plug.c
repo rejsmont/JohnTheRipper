@@ -35,6 +35,9 @@ static int omp_t = 1;
 #define PLAINTEXT_LENGTH	125
 #define BINARY_SIZE		64
 #define SALT_SIZE		sizeof(struct custom_salt)
+#define BINARY_ALIGN		4
+#define SALT_ALIGN		4
+
 #define MIN_KEYS_PER_CRYPT	1
 #define MAX_KEYS_PER_CRYPT	1
 
@@ -115,18 +118,24 @@ static void *get_salt(char *ciphertext)
 	char *ctcopy = strdup(ciphertext);
 	char *keeptr = ctcopy;
 	char *p;
-	static struct custom_salt cs;
+
+	/* ensure alignment */
+	static union {
+		struct custom_salt _cs;
+		ARCH_WORD_32 dummy;
+	} un;
+	static struct custom_salt *cs = &(un._cs);
 	ctcopy += TAG_LENGTH;
 	p = strtok(ctcopy, "$");
-	strncpy((char*)cs.salt, p, 32);
+	strncpy((char*)cs->salt, p, 32);
 	p = strtok(NULL, "$");
-	cs.N = atoi(p);
+	cs->N = atoi(p);
 	p = strtok(NULL, "$");
-	cs.r = atoi(p);
+	cs->r = atoi(p);
 	p = strtok(NULL, "$");
-	cs.p = atoi(p);
+	cs->p = atoi(p);
 	MEM_FREE(keeptr);
-	return (void *)&cs;
+	return (void *)cs;
 }
 
 static void *get_binary(char *ciphertext)
@@ -226,9 +235,9 @@ struct fmt_main fmt_scrypt = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN, // XXX
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN, // XXX
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,

@@ -416,7 +416,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		}
 
 #ifdef MD5_SSE_PARA
-		SSEmd5body(&saved_key[0][thread*64*NBKEYS], &crypt_key[thread*4*NBKEYS], 1);
+		SSEmd5body(&saved_key[0][thread*64*NBKEYS], &crypt_key[thread*4*NBKEYS], NULL, SSEi_MIXED_IN);
 #else
 		mdfivemmx_nosizeupdate((unsigned char*)&crypt_key[thread*4*NBKEYS], &saved_key[0][thread*64*NBKEYS], 0);
 #endif
@@ -459,7 +459,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 
 		// First limb
 #ifdef MD5_SSE_PARA
-		SSEmd5body(&saved_key[0][thread*64*NBKEYS], &interm_key[thread*4*NBKEYS], 1);
+		SSEmd5body(&saved_key[0][thread*64*NBKEYS], &interm_key[thread*4*NBKEYS], NULL, SSEi_MIXED_IN);
 #else
 		mdfivemmx_nosizeupdate((unsigned char*)&interm_key[thread*4*NBKEYS], &saved_key[0][thread*64*NBKEYS], 0);
 #endif
@@ -475,7 +475,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		// Do the rest of the limbs
 		for (i = 1; i < (((longest + 8) >> 6) + 1); i++) {
 #ifdef MD5_SSE_PARA
-			SSEmd5body(&saved_key[i][thread*64*NBKEYS], &interm_key[thread*4*NBKEYS], 0);
+			SSEmd5body(&saved_key[i][thread*64*NBKEYS], &interm_key[thread*4*NBKEYS], &interm_key[thread*4*NBKEYS], SSEi_RELOAD|SSEi_MIXED_IN);
 #else
 			mdfivemmx_noinit_nosizeupdate((unsigned char*)&interm_key[thread*4*NBKEYS], &saved_key[i][thread*64*NBKEYS], 0);
 #endif
