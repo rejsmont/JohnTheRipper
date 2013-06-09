@@ -23,8 +23,8 @@ static int omp_t = 1;
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"haval"
-#define FORMAT_NAME		"HAVAL"
+#define FORMAT_LABEL		"HAVAL"
+#define FORMAT_NAME		""
 #define FORMAT_TAG		"$haval$"
 #define TAG_LENGTH		7
 #define ALGORITHM_NAME		"32/" ARCH_BITS_STR

@@ -32,9 +32,9 @@ static int omp_t = 1;
 #include "md5.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"ssh-ng"
-#define FORMAT_NAME		"ssh-ng SSH RSA / DSA"
-#define ALGORITHM_NAME		"32/" ARCH_BITS_STR
+#define FORMAT_LABEL		"SSH-ng"
+#define FORMAT_NAME		""
+#define ALGORITHM_NAME		"RSA/DSA 32/" ARCH_BITS_STR
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1001
 #define PLAINTEXT_LENGTH	32

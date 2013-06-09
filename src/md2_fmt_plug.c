@@ -21,14 +21,13 @@ static int omp_t = 1;
 #include <omp.h>
 #define OMP_SCALE               1 // FIXME
 #endif
-
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"md2"
-#define FORMAT_NAME		"MD2"
+#define FORMAT_LABEL		"MD2"
+#define FORMAT_NAME		""
 #define FORMAT_TAG		"$md2$"
 #define TAG_LENGTH		5
-#define ALGORITHM_NAME		"32/" ARCH_BITS_STR
+#define ALGORITHM_NAME		"MD2 32/" ARCH_BITS_STR
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1
 #define PLAINTEXT_LENGTH	125
@@ -224,4 +223,3 @@ struct fmt_main fmt_md2_ = {
 		cmp_exact
 	}
 };
-

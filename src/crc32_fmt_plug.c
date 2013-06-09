@@ -35,9 +35,9 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"crc32"
-#define FORMAT_NAME			"CRC-32"
-#define ALGORITHM_NAME			"32/" ARCH_BITS_STR
+#define FORMAT_LABEL			"CRC32"
+#define FORMAT_NAME			""
+#define ALGORITHM_NAME			"CRC32 32/" ARCH_BITS_STR
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		0

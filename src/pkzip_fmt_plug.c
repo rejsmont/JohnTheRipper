@@ -31,8 +31,8 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"pkzip"
-#define FORMAT_NAME			"PKZIP"
+#define FORMAT_LABEL			"PKZIP"
+#define FORMAT_NAME			""
 #define ALGORITHM_NAME			"32/" ARCH_BITS_STR
 
 #define BENCHMARK_COMMENT		""

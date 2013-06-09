@@ -31,7 +31,7 @@ static unsigned int omp_t = 1;
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"xsha"
-#define FORMAT_NAME			"Mac OS X 10.4 - 10.6 salted"
+#define FORMAT_NAME			"Mac OS X 10.4 - 10.6"
 
 #define ALGORITHM_NAME			"SHA1 " SHA1_ALGORITHM_NAME
 

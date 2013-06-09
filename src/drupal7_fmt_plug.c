@@ -27,8 +27,8 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"drupal7"
-#define FORMAT_NAME			"Drupal 7 $S$"
+#define FORMAT_LABEL			"Drupal7"
+#define FORMAT_NAME			"$S$"
 #if ARCH_BITS >= 64
 #define ALGORITHM_NAME			"SHA512 64/" ARCH_BITS_STR " " SHA2_LIB
 #else

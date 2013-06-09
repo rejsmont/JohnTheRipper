@@ -25,8 +25,8 @@
 #include "options.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"formspring"
-#define FORMAT_NAME		"FormSpring sha256($salt.$pass)"
+#define FORMAT_LABEL		"FormSpring"
+#define FORMAT_NAME		"" /* sha256($salt.$pass) */
 
 #define ALGORITHM_NAME		"?" /* filled in by dynamic */
 #define BENCHMARK_COMMENT	""

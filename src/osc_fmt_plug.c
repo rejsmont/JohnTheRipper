@@ -29,7 +29,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"osc"
-#define FORMAT_NAME		"osCommerce md5($salt.$pass)"
+#define FORMAT_NAME		"osCommerce" /* md5($salt.$pass) */
 
 #define ALGORITHM_NAME		"?" /* filled in by md5-gen */
 #define BENCHMARK_COMMENT	""

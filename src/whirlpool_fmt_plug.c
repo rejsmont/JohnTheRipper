@@ -23,8 +23,8 @@ static int omp_t = 1;
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"whirlpool"
-#define FORMAT_NAME		"Whirpool"
+#define FORMAT_LABEL		"Whirpool"
+#define FORMAT_NAME		""
 #define FORMAT_TAG		"$whirlpool$"
 #define TAG_LENGTH		11
 #define ALGORITHM_NAME		"32/" ARCH_BITS_STR
@@ -218,8 +218,8 @@ static char *get_key(int index)
 struct fmt_main fmt_whirlpool_0 = {
 	{
 		"whirlpool0",
-		"WHIRLPOOL-O",
-		ALGORITHM_NAME,
+		"",
+		"WHIRLPOOL-0 " ALGORITHM_NAME,
 		BENCHMARK_COMMENT,
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
@@ -275,8 +275,8 @@ struct fmt_main fmt_whirlpool_0 = {
 struct fmt_main fmt_whirlpool_1 = {
 	{
 		"whirlpool1",
-		"WHIRLPOOL-1",
-		ALGORITHM_NAME,
+		"",
+		"WHIRLPOOL-1 " ALGORITHM_NAME,
 		BENCHMARK_COMMENT,
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
@@ -331,8 +331,8 @@ struct fmt_main fmt_whirlpool_1 = {
 struct fmt_main fmt_whirlpool = {
 	{
 		"whirlpool",
-		"WHIRLPOOL",
-		ALGORITHM_NAME,
+		"",
+		"WHIRLPOOL " ALGORITHM_NAME,
 		BENCHMARK_COMMENT,
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,

@@ -25,11 +25,11 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"sxc"
-#define FORMAT_NAME		"StarOffice SXC SHA-1 Blowfish"
+#define FORMAT_NAME		"StarOffice .sxc"
 #ifdef MMX_COEF
-#define ALGORITHM_NAME      SHA1_N_STR MMX_TYPE
+#define ALGORITHM_NAME		"SHA1 Blowfish " SHA1_N_STR MMX_TYPE
 #else
-#define ALGORITHM_NAME		"32/" ARCH_BITS_STR
+#define ALGORITHM_NAME		"SHA1 Blowfish 32/" ARCH_BITS_STR
 #endif
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1

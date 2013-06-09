@@ -23,8 +23,8 @@ static int omp_t = 1;
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"pst"
-#define FORMAT_NAME			"PST custom CRC-32"
+#define FORMAT_LABEL			"PST"
+#define FORMAT_NAME			"custom CRC-32"
 #define ALGORITHM_NAME			"32/" ARCH_BITS_STR
 
 #define BENCHMARK_COMMENT		""

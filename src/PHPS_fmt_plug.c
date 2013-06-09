@@ -38,8 +38,8 @@
 #include "options.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"phps"
-#define FORMAT_NAME		"PHPS md5(md5($pass).$salt)"
+#define FORMAT_LABEL		"PHPS"
+#define FORMAT_NAME		"" /* md5(md5($pass).$salt) */
 
 #define ALGORITHM_NAME		"?" /* filled in by md5-gen */
 #define BENCHMARK_COMMENT	""

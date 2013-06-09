@@ -39,7 +39,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"phpass"
-#define FORMAT_NAME			"phpass MD5"
+#define FORMAT_NAME			""
 
 #define ALGORITHM_NAME			"?" /* filled in by md5-gen */
 #define BENCHMARK_COMMENT		" ($P$9)"

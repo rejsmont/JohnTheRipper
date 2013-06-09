@@ -35,14 +35,14 @@ static unsigned int omp_t = 1;
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"ipb2"
-#define FORMAT_NAME			"Invision Power Board 2.x salted MD5"
+#define FORMAT_NAME			"Invision Power Board 2.x"
 
 #ifdef MD5_SSE_PARA
 #define NBKEYS				(MMX_COEF * MD5_SSE_PARA)
 #elif defined(MMX_COEF)
 #define NBKEYS				MMX_COEF
 #endif
-#define ALGORITHM_NAME			MD5_ALGORITHM_NAME
+#define ALGORITHM_NAME			"MD5 " MD5_ALGORITHM_NAME
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		0
