@@ -15,6 +15,14 @@
 #define MEMDBG_VALIDATE_DEEPER  2
 #define MEMDBG_VALIDATE_DEEPEST 3
 
+#include <stdio.h>
+#include <stdlib.h>
+#include "os.h"
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <string.h>
+
 /*
  * within the next included file, there is a single line that will turn on or off ALL
  * malloc debugging. There are other defines that will increase the level of debugging
@@ -51,14 +59,6 @@
  *       get out of your way, and most normal memory functions
  *       will be called with no overhead at all.
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "os.h"
-#if HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <string.h>
 
 /* these functions can be called by client code. Normally Memdbg_Used() and
  * MemDbg_Display() would be called at program exit. That will dump a list
