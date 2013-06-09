@@ -60,6 +60,14 @@ void MEMDBG_libc_free(void *p) {
 	free(p);
 }
 
+void *MEMDBG_libc_alloc(size_t size) {
+	return malloc(size);
+}
+
+void *MEMDBG_libc_calloc(size_t size) {
+	return calloc(1, size);
+}
+
 #if defined (MEMDBG_ON)
 
 /*
