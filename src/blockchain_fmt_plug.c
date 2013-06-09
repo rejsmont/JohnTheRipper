@@ -25,6 +25,7 @@
 #include <omp.h>
 #define OMP_SCALE               1 // tuned on core i7
 #endif
+#include "memdbg.h"
 
 #define FORMAT_LABEL		"blockchain"
 #define FORMAT_NAME		"blockchain My Wallet PBKDF2-HMAC-SHA-1 AES (10 iterations!)"
