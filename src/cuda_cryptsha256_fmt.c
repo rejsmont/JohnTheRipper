@@ -15,9 +15,9 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"sha256crypt-cuda"
-#define FORMAT_NAME		"sha256crypt"
+#define FORMAT_NAME		"crypt(3) $5$"
 
-#define ALGORITHM_NAME		"CUDA"
+#define ALGORITHM_NAME		"SHA256 CUDA"
 
 #define BENCHMARK_COMMENT	" (rounds=5000)"
 #define BENCHMARK_LENGTH	-1

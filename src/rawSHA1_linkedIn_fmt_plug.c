@@ -33,10 +33,10 @@
 #include "loader.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"raw-sha1-linkedin"
-#define FORMAT_NAME			"Raw SHA-1 LinkedIn"
+#define FORMAT_LABEL			"Raw-SHA1-Linkedin"
+#define FORMAT_NAME			""
 
-#define ALGORITHM_NAME			SHA1_ALGORITHM_NAME
+#define ALGORITHM_NAME			"SHA1 " SHA1_ALGORITHM_NAME
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

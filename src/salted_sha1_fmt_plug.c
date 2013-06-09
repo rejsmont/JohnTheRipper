@@ -28,13 +28,12 @@
 
 #include "sha.h"
 #include "base64.h"
-
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"salted-sha1"
-#define FORMAT_NAME			"Salted SHA-1"
+#define FORMAT_LABEL			"Salted-SHA1"
+#define FORMAT_NAME			""
 
-#define ALGORITHM_NAME			SHA1_ALGORITHM_NAME
+#define ALGORITHM_NAME			"SHA1 " SHA1_ALGORITHM_NAME
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		0

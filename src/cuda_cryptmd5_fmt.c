@@ -15,9 +15,9 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"md5crypt-cuda"
-#define FORMAT_NAME		"md5crypt"
+#define FORMAT_NAME		"crypt(3) $1$"
 
-#define ALGORITHM_NAME		"CUDA"
+#define ALGORITHM_NAME		"MD5 CUDA"
 
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1

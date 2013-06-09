@@ -24,9 +24,9 @@ static int VF = 1;	/* Will be set to 4 if we run vectorized */
 #include "wpapsk.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"wpapsk-opencl"
-#define FORMAT_NAME		"WPA-PSK PBKDF2-HMAC-SHA-1"
-#define ALGORITHM_NAME		"OpenCL"
+#define FORMAT_LABEL		"WPAPSK-opencl"
+#define FORMAT_NAME		""
+#define ALGORITHM_NAME		"PBKDF2-SHA1 OpenCL"
 
 #define BENCHMARK_LENGTH	-1
 

@@ -25,8 +25,8 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL            "pwsafe-cuda"
-#define FORMAT_NAME             "Password Safe SHA-256"
-#define ALGORITHM_NAME          "CUDA"
+#define FORMAT_NAME             "Password Safe"
+#define ALGORITHM_NAME          "SHA256 CUDA"
 #define BENCHMARK_COMMENT       ""
 #define BENCHMARK_LENGTH        -1
 #define PLAINTEXT_LENGTH        32

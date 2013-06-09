@@ -25,11 +25,11 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"strip"
-#define FORMAT_NAME		"STRIP Password Manager PBKDF2-SHA1"
+#define FORMAT_NAME		"STRIP Password Manager"
 #ifdef MMX_COEF
-#define ALGORITHM_NAME      SHA1_N_STR MMX_TYPE
+#define ALGORITHM_NAME		"PBKDF2-SHA1 " SHA1_N_STR MMX_TYPE
 #else
-#define ALGORITHM_NAME		"32/" ARCH_BITS_STR
+#define ALGORITHM_NAME		"PBKDF2-SHA1 32/" ARCH_BITS_STR
 #endif
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1

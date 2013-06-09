@@ -20,8 +20,8 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"oracle"
-#define FORMAT_NAME			"Oracle 10 DES"
-#define ALGORITHM_NAME			"32/" ARCH_BITS_STR
+#define FORMAT_NAME			"Oracle 10"
+#define ALGORITHM_NAME			"DES 32/" ARCH_BITS_STR
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

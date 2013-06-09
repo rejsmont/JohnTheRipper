@@ -20,8 +20,8 @@
 #endif
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"raw-blake2"
-#define FORMAT_NAME			"BLAKE2b 512"
+#define FORMAT_LABEL			"Raw-Blake2"
+#define FORMAT_NAME			""
 #if defined(__AVX__)
 #define ALGORITHM_NAME			"AVX"
 #elif defined(__XOP__)
@@ -253,7 +253,7 @@ struct fmt_main fmt_rawBLAKE2 = {
 	{
 		FORMAT_LABEL,
 		FORMAT_NAME,
-		ALGORITHM_NAME,
+		"BLAKE2b 512 " ALGORITHM_NAME,
 		BENCHMARK_COMMENT,
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,

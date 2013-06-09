@@ -22,9 +22,9 @@
 #include "options.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"raw-sha1-opencl"
-#define FORMAT_NAME			"Raw SHA-1"
-#define ALGORITHM_NAME			"OpenCL (inefficient, development use only)"
+#define FORMAT_LABEL			"Raw-SHA1-opencl"
+#define FORMAT_NAME			""
+#define ALGORITHM_NAME			"SHA1 OpenCL (inefficient, development use only)"
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

@@ -27,8 +27,8 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"encfs-opencl"
-#define FORMAT_NAME		"EncFS PBKDF2 AES / Blowfish"
-#define ALGORITHM_NAME		"OpenCL"
+#define FORMAT_NAME		"EncFS"
+#define ALGORITHM_NAME		"PBKDF2-SHA1 AES/Blowfish OpenCL"
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1
 #define	KEYS_PER_CRYPT		512

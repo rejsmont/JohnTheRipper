@@ -23,9 +23,9 @@
 #include "common-opencl.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"odf-opencl"
-#define FORMAT_NAME		"ODF SHA-1 Blowfish"
-#define ALGORITHM_NAME		"OpenCL"
+#define FORMAT_LABEL		"ODF-opencl"
+#define FORMAT_NAME		""
+#define ALGORITHM_NAME		"SHA1 Blowfish OpenCL"
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1
 #define MIN_KEYS_PER_CRYPT	1024*9

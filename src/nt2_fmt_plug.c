@@ -32,9 +32,9 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"nt2"
-#define FORMAT_NAME			"NT MD4"
+#define FORMAT_NAME			"NT"
 
-#define ALGORITHM_NAME			MD4_ALGORITHM_NAME
+#define ALGORITHM_NAME			"MD4 " MD4_ALGORITHM_NAME
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

@@ -23,12 +23,12 @@
 #include "opencl_rawsha256.h"
 #include "memdbg.h"
 
-#define RAW_FORMAT_LABEL		"raw-sha256-opencl"
-#define RAW_FORMAT_NAME			"Raw SHA-256"
+#define RAW_FORMAT_LABEL		"Raw-SHA256-opencl"
+#define RAW_FORMAT_NAME			""
 #define CISCO_FORMAT_LABEL		"cisco4-opencl"
-#define CISCO_FORMAT_NAME		"Cisco \"type 4\" hashes SHA-256"
+#define CISCO_FORMAT_NAME		"Cisco \"type 4\" hashes"
 
-#define ALGORITHM_NAME			"OpenCL (inefficient, development use mostly)"
+#define ALGORITHM_NAME			"SHA256 OpenCL (inefficient, development use mostly)"
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

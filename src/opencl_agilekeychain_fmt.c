@@ -32,8 +32,8 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"agilekeychain-opencl"
-#define FORMAT_NAME		"1Password Agile Keychain PBKDF2-HMAC-SHA-1 AES"
-#define ALGORITHM_NAME		"OpenCL"
+#define FORMAT_NAME		"1Password Agile Keychain"
+#define ALGORITHM_NAME		"PBKDF2-SHA1 AES OpenCL"
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1
 #define KEYS_PER_CRYPT		1024*9

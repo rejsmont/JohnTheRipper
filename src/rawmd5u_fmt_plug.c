@@ -28,10 +28,10 @@
 #include "johnswap.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL			"raw-md5u"
-#define FORMAT_NAME			"md5(unicode($p))"
+#define FORMAT_LABEL			"Raw-MD5u"
+#define FORMAT_NAME			""
 
-#define ALGORITHM_NAME			MD5_ALGORITHM_NAME
+#define ALGORITHM_NAME			"md5(unicode($p)) " MD5_ALGORITHM_NAME
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1
