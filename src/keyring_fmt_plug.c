@@ -42,9 +42,17 @@ typedef int gint;
 
 static struct fmt_tests keyring_tests[] = {
 	{"$keyring$db1b562e453a0764*3221*16*0*02b5c084e4802369c42507300f2e5e56", "openwall"},
-	{"$keyring$4f3f1557a7da17f5*2439*144*0*12215fabcff6782aa23605ab2cd843f7be9477b172b615eaa9130836f189d32ffda2e666747378f09c6e76ad817154daae83a36c0a0a35f991d40bcfcba3b7807ef57a0ce4c7f835bf34c6e358f0d66aa048d73dacaaaf6d7fa4b3510add6b88cc237000ff13cb4dbd132db33be3ea113bedeba80606f86662cc226af0dad789c703a7df5ad8700542e0f7a5e1f10cf0", "password"},
+	//{"$keyring$4f3f1557a7da17f5*2439*144*0*12215fabcff6782aa23605ab2cd843f7be9477b172b615eaa9130836f189d32ffda2e666747378f09c6e76ad817154daae83a36c0a0a35f991d40bcfcba3b7807ef57a0ce4c7f835bf34c6e358f0d66aa048d73dacaaaf6d7fa4b3510add6b88cc237000ff13cb4dbd132db33be3ea113bedeba80606f86662cc226af0dad789c703a7df5ad8700542e0f7a5e1f10cf0", "password"},
 	{NULL}
 };
+
+static void print_hex(unsigned char *str, int len)
+{
+	int i;
+	for (i = 0; i < len; ++i)
+		printf("%02x", str[i]);
+	printf("\n");
+}
 
 static struct custom_salt {
 	unsigned int iterations;
@@ -155,7 +163,7 @@ static void symkey_generate_simple(const char *password, int n_password, unsigne
 {
 
 	SHA256_CTX ctx;
-	guchar digest[64];
+	guchar digest[32];
 	guint n_digest;
 	gint pass, i;
 	gint needed_iv, needed_key;
@@ -219,6 +227,10 @@ static void decrypt_buffer(unsigned char *buffer, unsigned int len,
 	int n_password = strlen(password);
 
 	symkey_generate_simple(password, n_password, salt, 8, iterations, key, iv);
+
+	puts(password);
+	print_hex(key, 16);
+
 
 	memset(&akey, 0, sizeof(AES_KEY));
 	if (AES_set_decrypt_key(key, 128, &akey) < 0) {
