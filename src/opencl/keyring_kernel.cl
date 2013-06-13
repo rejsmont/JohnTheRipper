@@ -34,27 +34,11 @@
 #define uint16_t		ushort
 #define uint32_t		uint
 
-#ifndef uint8
-#define uint8  unsigned char
-#endif
-
-#ifndef uint32
-#define uint32 unsigned long int
-#endif
-
-#ifndef uint8
-#define uint8  unsigned char
-#endif
-
-#ifndef uint32
-#define uint32 unsigned long int
-#endif
-
 typedef struct
 {
-    uint32 total[2];
-    uint32 state[8];
-    uint8 buffer[64];
+    uint total[2];
+    uint state[8];
+    uchar buffer[64];
 }
 sha256_context;
 
@@ -80,21 +64,21 @@ inline void _memcpy_(void* dest, const uchar *src, int count)
 
 #define GET_UINT32(n,b,i)                       \
 {                                               \
-    (n) = ( (uint32) (b)[(i)    ] << 24 )       \
-        | ( (uint32) (b)[(i) + 1] << 16 )       \
-        | ( (uint32) (b)[(i) + 2] <<  8 )       \
-        | ( (uint32) (b)[(i) + 3]       );      \
+    (n) = ( (uint) (b)[(i)    ] << 24 )       \
+        | ( (uint) (b)[(i) + 1] << 16 )       \
+        | ( (uint) (b)[(i) + 2] <<  8 )       \
+        | ( (uint) (b)[(i) + 3]       );      \
 }
 
 #define PUT_UINT32(n,b,i)                       \
 {                                               \
-    (b)[(i)    ] = (uint8) ( (n) >> 24 );       \
-    (b)[(i) + 1] = (uint8) ( (n) >> 16 );       \
-    (b)[(i) + 2] = (uint8) ( (n) >>  8 );       \
-    (b)[(i) + 3] = (uint8) ( (n)       );       \
+    (b)[(i)    ] = (uchar) ( (n) >> 24 );       \
+    (b)[(i) + 1] = (uchar) ( (n) >> 16 );       \
+    (b)[(i) + 2] = (uchar) ( (n) >>  8 );       \
+    (b)[(i) + 3] = (uchar) ( (n)       );       \
 }
 
-void sha256_starts( sha256_context *ctx )
+inline void sha256_starts( sha256_context *ctx )
 {
     ctx->total[0] = 0;
     ctx->total[1] = 0;
@@ -109,10 +93,10 @@ void sha256_starts( sha256_context *ctx )
     ctx->state[7] = 0x5BE0CD19;
 }
 
-void sha256_process( sha256_context *ctx, uint8 data[64] )
+inline void sha256_process( sha256_context *ctx, uchar data[64] )
 {
-    uint32 temp1, temp2, W[64];
-    uint32 A, B, C, D, E, F, G, H;
+    uint temp1, temp2, W[64];
+    uint A, B, C, D, E, F, G, H;
 
     GET_UINT32( W[0],  data,  0 );
     GET_UINT32( W[1],  data,  4 );
@@ -240,9 +224,9 @@ void sha256_process( sha256_context *ctx, uint8 data[64] )
     ctx->state[7] += H;
 }
 
-void sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
+inline void sha256_update( sha256_context *ctx, uchar *input, uint length )
 {
-    uint32 left, fill;
+    uint left, fill;
 
     if( ! length ) return;
 
@@ -279,19 +263,18 @@ void sha256_update( sha256_context *ctx, uint8 *input, uint32 length )
     }
 }
 
-static uint8 sha256_padding[64] =
+inline void sha256_finish( sha256_context *ctx, uchar digest[32] )
 {
- 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
-void sha256_finish( sha256_context *ctx, uint8 digest[32] )
-{
-    uint32 last, padn;
-    uint32 high, low;
-    uint8 msglen[8];
+    const uchar sha256_padding[64] =
+    {
+        0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    uint last, padn;
+    uint high, low;
+    uchar msglen[8];
 
     high = ( ctx->total[0] >> 29 )
          | ( ctx->total[1] <<  3 );
@@ -334,14 +317,13 @@ typedef struct {
 	uint8_t salt[8];
 } keyring_salt;
 
-void symkey_generate_simple(__global const unsigned char *password, int n_password, __global const unsigned char *salt, int n_salt, int iterations, __global unsigned char *key, __global unsigned char *iv)
+inline void symkey_generate_simple(__global const unsigned char *password, int n_password, __global const unsigned char *salt, int n_salt, int iterations, __global unsigned char *key, __global unsigned char *iv)
 {
 
 	sha256_context ctx;
 	unsigned char digest[64];
 	unsigned char lpassword[32];
 	unsigned char lsalt[32];
-	unsigned char *p;
 	int n_digest;
 	int  pass, i;
 	int needed_iv, needed_key;
