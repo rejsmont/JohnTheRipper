@@ -46,14 +46,6 @@ static struct fmt_tests keyring_tests[] = {
 	{NULL}
 };
 
-static void print_hex(unsigned char *str, int len)
-{
-	int i;
-	for (i = 0; i < len; ++i)
-		printf("%02x", str[i]);
-	printf("\n");
-}
-
 static struct custom_salt {
 	unsigned int iterations;
 	unsigned char salt[SALTLEN];
@@ -228,8 +220,7 @@ static void decrypt_buffer(unsigned char *buffer, unsigned int len,
 
 	symkey_generate_simple(password, n_password, salt, 8, iterations, key, iv);
 
-	puts(password);
-	print_hex(key, 16);
+	//dump_stuff_msg(password, key, 16);
 
 
 	memset(&akey, 0, sizeof(AES_KEY));

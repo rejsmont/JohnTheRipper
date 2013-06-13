@@ -20,6 +20,7 @@
 #include "options.h"
 #include "sha2.h"
 #include "md5.h"
+#include "stdint.h"
 
 #define FORMAT_LABEL		"keyring-opencl"
 #define FORMAT_NAME		"GNOME Keyring"
@@ -28,15 +29,14 @@
 #define BENCHMARK_LENGTH	-1
 #define MIN_KEYS_PER_CRYPT	8*1024
 #define MAX_KEYS_PER_CRYPT	MIN_KEYS_PER_CRYPT
-#define BINARY_SIZE		0
 #define PLAINTEXT_LENGTH	12
+#define BINARY_SIZE		0
+#define BINARY_ALIGN		1
 #define SALT_SIZE		sizeof(struct custom_salt)
+#define SALT_ALIGN		4
 
-#define uint8_t			unsigned char
-#define uint16_t		unsigned short
-#define uint32_t		unsigned int
 #define SALTLEN 8
-typedef unsigned char guchar;
+typedef unsigned char guchar; /* How many aliases do we need?! */
 typedef unsigned int guint;
 typedef int gint;
 
@@ -73,13 +73,6 @@ static struct fmt_tests keyring_tests[] = {
 	//{"$keyring$4f3f1557a7da17f5*2439*144*0*12215fabcff6782aa23605ab2cd843f7be9477b172b615eaa9130836f189d32ffda2e666747378f09c6e76ad817154daae83a36c0a0a35f991d40bcfcba3b7807ef57a0ce4c7f835bf34c6e358f0d66aa048d73dacaaaf6d7fa4b3510add6b88cc237000ff13cb4dbd132db33be3ea113bedeba80606f86662cc226af0dad789c703a7df5ad8700542e0f7a5e1f10cf0", "password"},
 	{NULL}
 };
-static void print_hex(unsigned char *str, int len)
-{
-	int i;
-	for (i = 0; i < len; ++i)
-		printf("%02x", str[i]);
-	printf("\n");
-}
 
 static keyring_password *inbuffer;
 static keyring_hash *outbuffer;
@@ -142,13 +135,10 @@ static void init(struct fmt_main *self)
 	while (local_work_size > maxsize)
 		local_work_size >>= 1;
 
-	inbuffer =
-	    (keyring_password *) mem_calloc(sizeof(keyring_password) *
-	    global_work_size);
-	outbuffer =
-	    (keyring_hash *) mem_alloc(sizeof(keyring_hash) * global_work_size);
+	inbuffer = (keyring_password *) mem_calloc(insize);
+	outbuffer = (keyring_hash *) mem_alloc(outsize);
 
-	cracked = mem_calloc(sizeof(*cracked) *	global_work_size);
+	cracked = mem_calloc(cracked_size);
 
 	/// Allocate memory
 	mem_in =
@@ -251,8 +241,8 @@ static void set_salt(void *salt)
 	memcpy((char*)currentsalt.salt, cur_salt->salt, SALTLEN);
 	currentsalt.length = SALTLEN;
 	currentsalt.iterations = cur_salt->iterations;
-	printf("\niterations%d\n", currentsalt.iterations);
-	printf("\nsalt length%d\n", currentsalt.length);
+	//printf("\niterations%d\n", currentsalt.iterations);
+	//printf("\nsalt length%d\n", currentsalt.length);
 }
 
 static void keyring_set_key(char *key, int index)
@@ -323,16 +313,13 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		unsigned char buffer[64];
 		unsigned char iv[32];
 		AES_KEY akey;
+		unsigned char *p = outbuffer[index].iv;
 
-		puts(inbuffer[index].v);
-		printf("\n%d\n", inbuffer[index].length);
-		print_hex(outbuffer[index].key, 16);
-		printf("\n");
+		//dump_stuff_msg(inbuffer[index].length, outbuffer[index].key, 16);
 
 		// on GPU now!
 		// symkey_generate_simple(password, n_password, salt, 8, iterations, key, iv);
 
-		unsigned char *p = outbuffer[index].iv;
 		memcpy(iv, p, 16);
 		memcpy(buffer, cur_salt->ct, cur_salt->crypto_size);
 		memset(&akey, 0, sizeof(AES_KEY));
@@ -371,9 +358,9 @@ struct fmt_main fmt_opencl_keyring = {
 		BENCHMARK_LENGTH,
 		PLAINTEXT_LENGTH,
 		BINARY_SIZE,
-		DEFAULT_ALIGN,
+		BINARY_ALIGN,
 		SALT_SIZE,
-		DEFAULT_ALIGN,
+		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,

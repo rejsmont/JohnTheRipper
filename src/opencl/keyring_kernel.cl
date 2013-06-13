@@ -42,7 +42,7 @@ typedef struct
 }
 sha256_context;
 
-inline void _memcpy(void* dest, __global const uchar *src, int count)
+inline void _memcpy(uchar* dest, __global const uchar *src, int count)
 {
 	char* dst8 = (char*)dest;
 	__global uchar* src8 = (__global uchar*)src;
@@ -52,7 +52,7 @@ inline void _memcpy(void* dest, __global const uchar *src, int count)
 	}
 }
 
-inline void _memcpy_(void* dest, const uchar *src, int count)
+inline void _memcpy_(uchar* dest, const uchar *src, int count)
 {
 	char* dst8 = (char*)dest;
 	uchar* src8 = (uchar*)src;
@@ -241,8 +241,8 @@ inline void sha256_update( sha256_context *ctx, uchar *input, uint length )
 
     if( left && length >= fill )
     {
-        _memcpy_( (void *) (ctx->buffer + left),
-                (void *) input, fill );
+        _memcpy_( (uchar *) (ctx->buffer + left),
+                (uchar *) input, fill );
         sha256_process( ctx, ctx->buffer );
         length -= fill;
         input  += fill;
@@ -258,20 +258,18 @@ inline void sha256_update( sha256_context *ctx, uchar *input, uint length )
 
     if( length )
     {
-        _memcpy_( (void *) (ctx->buffer + left),
-                (void *) input, length );
+        _memcpy_( (uchar *) (ctx->buffer + left),
+                (uchar *) input, length );
     }
 }
 
 inline void sha256_finish( sha256_context *ctx, uchar digest[32] )
 {
-    const uchar sha256_padding[64] =
-    {
-        0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
+    uchar sha256_padding[64] =
+	{ 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     uint last, padn;
     uint high, low;
     uchar msglen[8];
@@ -298,8 +296,6 @@ inline void sha256_finish( sha256_context *ctx, uchar digest[32] )
     PUT_UINT32( ctx->state[6], digest, 24 );
     PUT_UINT32( ctx->state[7], digest, 28 );
 }
-
-#define PLAINTEXT_LENGTH 12
 
 typedef struct {
 	uint32_t length;
