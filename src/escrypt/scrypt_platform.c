@@ -24,7 +24,7 @@
 
 #include "scrypt_platform.h"
 
-#include "memdbg.h"
+#include "../memdbg.h"
 
 static void *
 alloc_region(escrypt_region_t * region, size_t size)
