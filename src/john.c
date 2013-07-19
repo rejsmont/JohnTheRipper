@@ -1065,7 +1065,7 @@ static void john_init(char *name, int argc, char **argv)
 		listconf_parse_late();
 
 #ifdef HAVE_OPENCL
-	opencl_preinit();
+	ocl_gpu_id = -1;
 #endif
 
 	common_init();

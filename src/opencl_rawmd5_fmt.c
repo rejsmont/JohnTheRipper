@@ -70,7 +70,7 @@ static const char * warn[] = {
 };
 
 extern void common_find_best_lws(size_t group_size_limit,
-        unsigned int sequential_id, cl_kernel crypt_kernel);
+        int sequential_id, cl_kernel crypt_kernel);
 extern void common_find_best_gws(int sequential_id, unsigned int rounds, int step,
         unsigned long long int max_run_time);
 
@@ -202,7 +202,7 @@ static void init(struct fmt_main *self)
 {
 	size_t selected_gws, max_mem;
 
-	opencl_init("$JOHN/kernels/md5_kernel.cl", ocl_gpu_id);
+	opencl_init("$JOHN/kernels/md5_kernel.cl", ocl_gpu_id, NULL);
 	crypt_kernel = clCreateKernel(program[ocl_gpu_id], "md5_self_test", &ret_code);
 	HANDLE_CLERROR(ret_code, "Error creating kernel. Double-check kernel name?");
 

@@ -51,7 +51,7 @@
 };
 
 extern void common_find_best_lws(size_t group_size_limit,
-	unsigned int sequential_id, cl_kernel crypt_kernel);
+	int sequential_id, cl_kernel crypt_kernel);
 extern void common_find_best_gws(int sequential_id, unsigned int rounds, int step,
 	unsigned long long int max_run_time);
 
@@ -220,7 +220,7 @@ static void init(struct fmt_main *self)
 	cl_ulong maxsize;
 	size_t selected_gws;
 
-	opencl_init_opt("$JOHN/kernels/pwsafe_kernel.cl", ocl_gpu_id, NULL);
+	opencl_init("$JOHN/kernels/pwsafe_kernel.cl", ocl_gpu_id, NULL);
 
 	init_kernel = clCreateKernel(program[ocl_gpu_id], KERNEL_INIT_NAME, &ret_code);
 	HANDLE_CLERROR(ret_code, "Error while creating init kernel");

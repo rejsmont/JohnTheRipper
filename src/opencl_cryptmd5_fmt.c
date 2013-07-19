@@ -50,7 +50,7 @@ static const char * warn[] = {
 };
 
 extern void common_find_best_lws(size_t group_size_limit,
-	unsigned int sequential_id, cl_kernel crypt_kernel);
+	int sequential_id, cl_kernel crypt_kernel);
 extern void common_find_best_gws(int sequential_id, unsigned int rounds, int step,
 	unsigned long long int max_run_time);
 
@@ -309,7 +309,7 @@ static void init(struct fmt_main *self)
 	cl_ulong maxsize;
 	size_t selected_gws;
 
-	opencl_init_opt("$JOHN/kernels/cryptmd5_kernel.cl", ocl_gpu_id, NULL);
+	opencl_init("$JOHN/kernels/cryptmd5_kernel.cl", ocl_gpu_id, NULL);
 
 	///Create Kernel
 	crypt_kernel = clCreateKernel(program[ocl_gpu_id], KERNEL_NAME, &ret_code);

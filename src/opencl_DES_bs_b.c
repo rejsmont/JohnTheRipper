@@ -308,7 +308,7 @@ static void build_kernel_exp(int dev_id, char *options)
 
 static void init_dev()
 {
-	opencl_init_dev(ocl_gpu_id);
+	opencl_prepare_dev(ocl_gpu_id);
 
 	opencl_DES_bs_data_gpu = clCreateBuffer(context[ocl_gpu_id], CL_MEM_READ_WRITE, MULTIPLIER * sizeof(opencl_DES_bs_transfer), NULL, &err);
 	if(opencl_DES_bs_data_gpu == (cl_mem)0)
@@ -373,7 +373,7 @@ void DES_bs_select_device(struct fmt_main *fmt)
 	size_t max_lws;
 	const char *errMsg;
 
-	opencl_init_opt("$JOHN/kernels/DES_bs_kernel.cl", ocl_gpu_id, NULL);
+	opencl_init("$JOHN/kernels/DES_bs_kernel.cl", ocl_gpu_id, NULL);
 
 	krnl[ocl_gpu_id][0] = clCreateKernel(program[ocl_gpu_id], "DES_bs_25_b", &err) ;
 	if (err) {
