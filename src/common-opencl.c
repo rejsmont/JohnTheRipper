@@ -535,7 +535,8 @@ static void dev_init(int sequential_id)
 		fprintf(stderr, "\n");
 }
 
-static char *include_source(char *pathname, int sequential_id, char *opts)
+static char *include_source(char *pathname, int sequential_id, char *opts,
+                            int defaults)
 {
 	static char include[PATH_BUFFER_SIZE];
 
@@ -548,7 +549,7 @@ static char *include_source(char *pathname, int sequential_id, char *opts)
 #else
 		gpu_nvidia(device_info[sequential_id]) ? "-cl-nv-verbose" : "",
 #endif
-		OPENCLBUILDOPTIONS);
+	        defaults ? OPENCLBUILDOPTIONS : "");
 
 	if (opts) {
 		strcat(include, " ");
@@ -565,6 +566,7 @@ void opencl_build(int sequential_id, char *opts, int save, char * file_name, int
 	cl_int build_code;
 	char * build_log; size_t log_size;
 	const char *srcptr[] = { kernel_source };
+
 	assert(kernel_loaded);
 	program[sequential_id] =
 		clCreateProgramWithSource(context[sequential_id], 1, srcptr, NULL,
@@ -572,7 +574,15 @@ void opencl_build(int sequential_id, char *opts, int save, char * file_name, int
 	HANDLE_CLERROR(ret_code, "Error while creating program");
 
 	build_code = clBuildProgram(program[sequential_id], 0, NULL,
-		include_source("$JOHN/kernels", sequential_id, opts), NULL, NULL);
+		include_source("$JOHN/kernels", sequential_id, opts, 1),
+		 NULL, NULL);
+
+	// Workaround for crappy non-compliant drivers (eg. Intel, Apple)
+	if ((build_code == CL_INVALID_BUILD_OPTIONS)) {
+		build_code = clBuildProgram(program[sequential_id], 0, NULL,
+			include_source("$JOHN/kernels", sequential_id, opts, 0),
+		        NULL, NULL);
+	}
 
 	HANDLE_CLERROR(clGetProgramBuildInfo(program[sequential_id], devices[sequential_id],
 		CL_PROGRAM_BUILD_LOG, 0, NULL,
@@ -583,7 +593,7 @@ void opencl_build(int sequential_id, char *opts, int save, char * file_name, int
 		CL_PROGRAM_BUILD_LOG, log_size + 1, (void *) build_log,
 		NULL), "Error while getting build info");
 
-	///Report build errors and warnings
+	// Report build errors and warnings
 	if ((build_code != CL_SUCCESS) && showLog ) {
 		// Give us much info about error and exit
 		fprintf(stderr, "Build log: %s\n", build_log);
@@ -642,7 +652,7 @@ static void opencl_build_from_binary(int sequential_id)
 		CL_PROGRAM_BUILD_LOG, sizeof(opencl_log), (void *) opencl_log,
 		NULL), "Error while getting build info (using cached binary)");
 
-	///Report build errors and warnings
+	// Report build errors and warnings
 	if (build_code != CL_SUCCESS) {
 		// Give us much info about error and exit
 		fprintf(stderr, "Binary build log: %s\n", opencl_log);
@@ -709,10 +719,10 @@ void opencl_find_best_workgroup_limit(struct fmt_main *self, size_t group_size_l
 	if (wg_multiple > max_group_size)
 		wg_multiple = max_group_size;
 
-	///Command Queue changing:
-	///1) Delete old CQ
+	// Command Queue changing:
+	// 1) Delete old CQ
 	clReleaseCommandQueue(queue[sequential_id]);
-	///2) Create new CQ with profiling enabled
+	// 2) Create new CQ with profiling enabled
 	queue[sequential_id] =
 		clCreateCommandQueue(context[sequential_id], devices[sequential_id],
 		CL_QUEUE_PROFILING_ENABLE, &ret_code);
@@ -723,15 +733,15 @@ void opencl_find_best_workgroup_limit(struct fmt_main *self, size_t group_size_l
 
 	self->methods.clear_keys();
 
-	/// Set keys - first key from tests will be benchmarked
+	// Set keys - first key from tests will be benchmarked
 	for (i = 0; i < self->params.max_keys_per_crypt; i++) {
 		self->methods.set_key(self->params.tests[0].plaintext, i);
 	}
-	/// Set salt
+	// Set salt
 	self->methods.set_salt(self->methods.salt(self->params.tests[0].
 		ciphertext));
 
-	/// Warm-up run
+	// Warm-up run
 	local_work_size = wg_multiple;
 	count = self->params.max_keys_per_crypt;
 	self->methods.crypt_all(&count, NULL);
@@ -765,7 +775,7 @@ void opencl_find_best_workgroup_limit(struct fmt_main *self, size_t group_size_l
 		numloops = 10;
 	//fprintf(stderr, "%zu, %zu, time: %zu, loops: %d\n", endTime, startTime, (endTime-startTime), numloops);
 
-	/// Find minimum time
+	// Find minimum time
 	for (optimal_work_group = my_work_group = wg_multiple;
 		(int) my_work_group <= (int) max_group_size;
 		my_work_group += wg_multiple) {
@@ -815,7 +825,7 @@ void opencl_find_best_workgroup_limit(struct fmt_main *self, size_t group_size_l
 		}
 		//fprintf(stderr, "LWS %d time=%llu ns\n",(int) my_work_group, (unsigned long long)sumEndTime-sumStartTime);
 	}
-	///Release profiling queue and create new with profiling disabled
+	// Release profiling queue and create new with profiling disabled
 	clReleaseCommandQueue(queue[sequential_id]);
 	queue[sequential_id] =
 		clCreateCommandQueue(context[sequential_id], devices[sequential_id], 0,
@@ -1023,7 +1033,7 @@ void opencl_find_best_lws(
 	else if (numloops > 10)
 		numloops = 10;
 
-	/// Find minimum time
+	// Find minimum time
 	for (optimal_work_group = my_work_group = wg_multiple;
 		(int) my_work_group <= (int) max_group_size;
 		my_work_group += wg_multiple) {
@@ -1066,7 +1076,7 @@ void opencl_find_best_lws(
 			optimal_work_group = my_work_group;
 		}
 	}
-	///Release profiling queue and create new with profiling disabled
+	// Release profiling queue and create new with profiling disabled
 	HANDLE_CLERROR(clReleaseCommandQueue(queue[sequential_id]), "Failed in clReleaseCommandQueue");
 	queue[sequential_id] =
 		clCreateCommandQueue(context[sequential_id], devices[sequential_id], 0,
@@ -1171,7 +1181,7 @@ void opencl_find_best_gws(
 		if (show_speed)
 			fprintf(stderr, "\n");
 	}
-	///Release profiling queue and create new with profiling disabled
+	// Release profiling queue and create new with profiling disabled
 	HANDLE_CLERROR(clReleaseCommandQueue(queue[sequential_id]), "Failed in clReleaseCommandQueue");
 	queue[sequential_id] =
 		clCreateCommandQueue(context[sequential_id], devices[sequential_id], 0,
