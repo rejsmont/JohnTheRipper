@@ -179,7 +179,7 @@ OCL_OBJS = \
 	opencl_ntlmv2_fmt.o opencl_rawsha256_fmt.o \
 	opencl_krb5pa-sha1_fmt.o opencl_rar_fmt.o opencl_odf_aes_fmt.o \
 	opencl_sha2_common.o opencl_blockchain_fmt.o opencl_keyring_fmt.o \
-	opencl_7z_fmt.o
+	opencl_7z_fmt.o opencl_pbkdf2_hmac_sha256_fmt.o opencl_mscash_fmt.o
 
 CUDA_OBJS = \
 	common-cuda.o cuda_common.o \
@@ -1846,12 +1846,17 @@ win32-mingw-x86-sse2:
 	@echo "#define JOHN_BLD" '"'$@'"' > john_build_rule.h
 	$(MAKE) $(PROJ_WIN32_MINGW) \
 		JOHN_OBJS="$(JOHN_OBJS) x86.o x86-sse.o sha1-mmx.o md4-mmx.o md5-mmx.o sse-intrinsics.o" \
-		CFLAGS="$(CFLAGS) -Wall -mpreferred-stack-boundary=4 -msse2 -m32" \
-		LDFLAGS="$(LDFLAGS) -lpthread" \
-		ASFLAGS="$(ASFLAGS) -msse2 -m32 -DUNDERSCORES"
+		CFLAGS="-c -static -Wall -Wdeclaration-after-statement -O2 -fomit-frame-pointer -I/usr/local/include $(OMPFLAGS) $(AMDAPP) $(JOHN_CFLAGS) -Wall -mpreferred-stack-boundary=4 -msse2 -m32" \
+		LDFLAGS="-static -lssl -lcrypto -lwsock32 -lwst -lws2_32 -lgdi32 -lm -lpthread.dll -lz.dll $(OMPFLAGS)" \
+		ASFLAGS="$(ASFLAGS) -msse2 -m32 -DUNDERSCORES" \
+		CPP=$(GCC) CC=$(GCC) LD=$(GCC) CXX=$(CXX)
 	@echo "Failing after this point just means some helper tools did not build:"
-	$(MAKE) $(PROJ_CXX) CFLAGS="$(CFLAGS) -m32"
-	$(MAKE) $(PROJ_PCAP) CFLAGS="$(CFLAGS) -m32"
+	$(MAKE) $(PROJ_CXX) \
+	    CFLAGS="-c -static -Wall -Wdeclaration-after-statement -O2 -fomit-frame-pointer -I/usr/local/include $(HAVE_GMP) $(OMPFLAGS) $(AMDAPP) $(JOHN_CFLAGS) -Wall -mpreferred-stack-boundary=4 -msse2 -m32" \
+	    CPP=$(GCC) CC=$(GCC) LD=$(GCC) CXX=$(CXX)
+	$(MAKE) $(PROJ_PCAP) \
+	    CFLAGS="-c -static -Wall -Wdeclaration-after-statement -O2 -fomit-frame-pointer -I/usr/local/include $(HAVE_GMP) $(OMPFLAGS) $(AMDAPP) $(JOHN_CFLAGS) -Wall -mpreferred-stack-boundary=4 -msse2 -m32" \
+	    CPP=$(GCC) CC=$(GCC) LD=$(GCC) CXX=$(CXX)
 	@echo "All done"
 
 win32-mingw-x86-mmx:
