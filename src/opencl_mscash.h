@@ -2,13 +2,13 @@
  * This software is Copyright (c) 2013 Sayantan Datta <std2048 at gmail dot com>
  * and it is hereby released to the general public under the following terms:
  * Redistribution and use in source and binary forms, with or without modification, are permitted.
- * This is a direct port of mscash-cuda format by Lukas Odzioba
+ * This is format is based on mscash-cuda by Lukas Odzioba
  * <lukas dot odzioba at gmail dot com>
  */
 #ifndef _MSCASH_H
 #define _MSCASH_H
 
-#define	KEYS_PER_CRYPT		(1024 * 512)
+#define	KEYS_PER_CRYPT		(1024 * 2048)
 
 #define BINARY_SIZE		16
 #define PLAINTEXT_LENGTH	27
@@ -33,19 +33,5 @@
 #define SQRT_3			0x6ed9eba1
 
 static const char mscash_prefix[] = "M$";
-
-typedef struct {
-	unsigned char length;
-	unsigned char v[PLAINTEXT_LENGTH];
-} mscash_password;
-
-typedef struct {
-	unsigned int v[8];
-} mscash_hash;
-
-typedef struct {
-	unsigned char length;
-	char salt[SALT_LENGTH+1];
-} mscash_salt;
 
 #endif
