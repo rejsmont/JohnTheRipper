@@ -174,6 +174,11 @@ static char *fmt_self_test_body(struct fmt_main *format,
 #endif
 	MemDbg_Validate_msg(MEMDBG_VALIDATE_DEEPEST, "\nAt start of self-test:");
 
+#ifndef BENCH_BUILD
+	if (options.flags & FLG_NOTESTS)
+		return NULL;
+#endif
+
 	if (format->params.plaintext_length < 1 ||
 	    format->params.plaintext_length > PLAINTEXT_BUFFER_SIZE - 3)
 		return "plaintext_length";
@@ -355,7 +360,7 @@ static char *fmt_self_test_body(struct fmt_main *format,
 /* change the next line to #if 0 to temp stop doing validity checks.
  * this should almost NEVER be done.  However, I have done it when
  * trying new code out in a format, and before it was totally working
- * just to check the speed of the changes, to determine it it was
+ * just to check the speed of the changes, to determine if it was
  * good  enough to continue to fully implement, or if the changes
  * were not making any difference.
  */
