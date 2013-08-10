@@ -63,6 +63,7 @@ static int john_omp_threads_new;
 #include "single.h"
 #include "wordlist.h"
 #include "inc.h"
+#include "mask.h"
 #include "mkv.h"
 #include "external.h"
 #include "batch.h"
@@ -193,7 +194,6 @@ extern struct fmt_main fmt_opencl_blockchain;
 extern struct fmt_main fmt_opencl_keyring;
 extern struct fmt_main fmt_opencl_sevenzip;
 extern struct fmt_main fmt_opencl_pbkdf2_hmac_sha256;
-extern struct fmt_main fmt_opencl_mscash;
 #endif
 #ifdef HAVE_CUDA
 extern struct fmt_main fmt_cuda_cryptmd5;
@@ -407,7 +407,6 @@ static void john_register_all(void)
 	john_register_one(&fmt_opencl_xsha512_ng);
 	john_register_one(&fmt_opencl_zip);
 	john_register_one(&fmt_opencl_pbkdf2_hmac_sha256);
-	john_register_one(&fmt_opencl_mscash);
 #endif
 
 #ifdef HAVE_CUDA
@@ -1135,15 +1134,15 @@ static void john_run(void)
 		if (options.flags & FLG_SINGLE_CHK)
 			do_single_crack(&database);
 		else
-		if (options.flags & FLG_MASK_CHK)
-			do_mask_crack(&database, options.mask, options.wordlist);
-		else
 		if (options.flags & FLG_WORDLIST_CHK)
 			do_wordlist_crack(&database, options.wordlist,
 				(options.flags & FLG_RULES) != 0);
 		else
 		if (options.flags & FLG_INC_CHK)
 			do_incremental_crack(&database, options.charset);
+		else
+		if (options.flags & FLG_MASK_CHK)
+			do_mask_crack(&database, options.mask);
 		else
 		if (options.flags & FLG_MKV_CHK)
 			do_markov_crack(&database, options.mkv_param);

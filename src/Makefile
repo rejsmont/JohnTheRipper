@@ -152,8 +152,9 @@ JOHN_OBJS = \
 	gost.o \
 	batch.o bench.o charset.o common.o compiler.o config.o cracker.o \
 	crc32.o external.o formats.o getopt.o idle.o inc.o john.o list.o \
-	loader.o logger.o math.o mask.o memory.o misc.o options.o params.o path.o \
-	recovery.o rpp.o rules.o signals.o single.o status.o tty.o wordlist.o \
+	loader.o logger.o mask.o math.o memory.o misc.o options.o params.o \
+	path.o recovery.o rpp.o rules.o signals.o single.o status.o tty.o \
+	wordlist.o \
 	mkv.o mkvlib.o \
 	listconf.o \
 	fake_salts.o \
@@ -179,7 +180,7 @@ OCL_OBJS = \
 	opencl_ntlmv2_fmt.o opencl_rawsha256_fmt.o \
 	opencl_krb5pa-sha1_fmt.o opencl_rar_fmt.o opencl_odf_aes_fmt.o \
 	opencl_sha2_common.o opencl_blockchain_fmt.o opencl_keyring_fmt.o \
-	opencl_7z_fmt.o opencl_pbkdf2_hmac_sha256_fmt.o opencl_mscash_fmt.o
+	opencl_7z_fmt.o opencl_pbkdf2_hmac_sha256_fmt.o
 
 CUDA_OBJS = \
 	common-cuda.o cuda_common.o \
