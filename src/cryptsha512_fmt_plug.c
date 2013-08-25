@@ -25,7 +25,7 @@
 #define BINARY_SIZE			64
 #define SALT_LENGTH			16
 #define CIPHERTEXT_LENGTH		86
-#include "cryptsha512_valid.h"
+#include "cryptsha512_common.h"
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"sha512crypt"
