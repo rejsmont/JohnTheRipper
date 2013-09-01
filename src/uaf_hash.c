@@ -78,6 +78,7 @@ typedef struct dsc$descriptor_s string;
 /*
  *	Create a quadword data type as successive longwords.
  */
+#undef quad
 #define quad john_quad
 typedef union {
     uaf_lword ulw[2];
