@@ -64,13 +64,10 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-/* The reason we want to bump OMP_SCALE in this case is to even out the
-   difference in processing time for different length keys. It doesn't
-   boost performance in other ways */
 #ifdef _OPENMP
 #include <omp.h>
 #include <pthread.h>
-#define OMP_SCALE		4
+#define OMP_SCALE		32
 static pthread_mutex_t *lockarray;
 #endif
 
@@ -97,7 +94,7 @@ static pthread_mutex_t *lockarray;
 #endif
 #define BENCHMARK_LENGTH	-1
 
-#define PLAINTEXT_LENGTH	16 /* Max. currently supported is 22 */
+#define PLAINTEXT_LENGTH	22 /* Max. currently supported is 22 */
 #define UNICODE_LENGTH		(2 * PLAINTEXT_LENGTH)
 #define BINARY_SIZE		0
 #define SALT_SIZE		sizeof(rarfile)
