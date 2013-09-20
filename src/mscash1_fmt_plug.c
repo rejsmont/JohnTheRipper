@@ -693,7 +693,6 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
     const UTF8 * source, unsigned int lenStoreOffset, unsigned int *lastlen)
 {
 	unsigned int *target = keybuffer;
-	unsigned int *targetEnd = &keybuffer[xBuf * ((PLAINTEXT_LENGTH + 1) >> 1)];
 	UTF32 chl, chh = 0x80;
 	unsigned int outlen = 0;
 
@@ -708,7 +707,7 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
 					chl <<= 6;
 					chl += *source;
 				} else {
-					*lastlen = ((27 >> 1) + 1) * xBuf;
+					*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 					return;
 				}
 			case 1:
@@ -717,20 +716,20 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
 					chl <<= 6;
 					chl += *source;
 				} else {
-					*lastlen = ((27 >> 1) + 1) * xBuf;
+					*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 					return;
 				}
 			case 0:
 				break;
 			default:
-				*lastlen = ((27 >> 1) + 1) * xBuf;
+				*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 				return;
 			}
 			chl -= offsetsFromUTF8[extraBytesToRead];
 		}
 		source++;
 		outlen++;
-		if (*source) {
+		if (*source && outlen < PLAINTEXT_LENGTH) {
 			chh = *source;
 			if (chh >= 0xC0) {
 				unsigned int extraBytesToRead =
@@ -742,7 +741,7 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
 						chh <<= 6;
 						chh += *source;
 					} else {
-						*lastlen = ((27 >> 1) + 1) * xBuf;
+						*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 						return;
 					}
 				case 1:
@@ -751,13 +750,13 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
 						chh <<= 6;
 						chh += *source;
 					} else {
-						*lastlen = ((27 >> 1) + 1) * xBuf;
+						*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 						return;
 					}
 				case 0:
 					break;
 				default:
-					*lastlen = ((27 >> 1) + 1) * xBuf;
+					*lastlen = ((PLAINTEXT_LENGTH >> 1) + 1) * xBuf;
 					return;
 				}
 				chh -= offsetsFromUTF8[extraBytesToRead];
@@ -766,15 +765,12 @@ static inline void set_key_helper_utf8(unsigned int * keybuffer, unsigned int xB
 			outlen++;
 		} else {
 			chh = 0x80;
+			*target = chh << 16 | chl;
+			target += xBuf;
+			break;
 		}
 		*target = chh << 16 | chl;
 		target += xBuf;
-		if (*source == 0) {
-			break;
-		}
-		if (target >= targetEnd) {
-			break;
-		}
 	}
 	if (chh != 0x80 || outlen == 0) {
 		*target = 0x80;
