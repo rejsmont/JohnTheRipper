@@ -27,6 +27,7 @@ static int omp_t = 1;
 #include <omp.h>
 #define OMP_SCALE               8 // XXX
 #endif
+#include "memdbg.h"
 
 #define FORMAT_TAG 		"$bbes10$"
 #define FORMAT_TAG_LENGTH	8
@@ -243,4 +244,3 @@ struct fmt_main fmt_blackberry1 = {
 		cmp_exact
 	}
 };
-
