@@ -14,8 +14,8 @@
 #include "cuda_common.h"
 #include "memdbg.h"
 
-#define FORMAT_LABEL		"WPAPSK-cuda"
-#define FORMAT_NAME		""
+#define FORMAT_LABEL		"wpapsk-cuda"
+#define FORMAT_NAME		"WPA/WPA2 PSK"
 #define ALGORITHM_NAME		"PBKDF2-SHA1 CUDA"
 
 #define BENCHMARK_COMMENT	""
