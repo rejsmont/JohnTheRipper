@@ -72,6 +72,10 @@
 #define MAX_KEYS_PER_CRYPT  1
 #endif
 
+#ifdef DMG_DEBUG
+extern volatile int bench_running;
+#endif
+
 #undef HTONL
 #define HTONL(n) (((((unsigned long)(n) & 0xFF)) << 24) | \
 		((((unsigned long)(n) & 0xFF00)) << 8) | \
@@ -420,39 +424,6 @@ err:
 	return -1;
 }
 
-#ifdef DMG_DEBUG
-#if 0
-#define dump_strings(p, l) dump_stuff(p, l)
-#else
-static void dump_strings(unsigned char *p, int len)
-{
-	unsigned char *s = p;
-	extern volatile int bench_running;
-
-	if (bench_running) return;
-
-	fprintf(stderr, "\n");
-	while (len--) {
-		if (*p < 0x20 || *p > 0x7e) {
-			if (p - s > 3) {
-				while (s < p)
-					fputc(*s++, stderr);
-				putc(' ', stderr);
-			} else
-				s = p;
-			s++;
-		}
-		p++;
-	}
-	if (p - s > 3)
-		while (s < p)
-			fputc(*s++, stderr);
-	fprintf(stderr, "\n");
-	fflush(stderr);
-}
-#endif
-#endif
-
 static int hash_plugin_check_hash(const char *password)
 {
 	unsigned char derived_key[32];
@@ -508,7 +479,8 @@ static int hash_plugin_check_hash(const char *password)
 		/* 16 consecutive nulls */
 		if (jtr_memmem(outbuf, cur_salt->data_size, (void*)nulls, 16)) {
 #ifdef DMG_DEBUG
-			dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 			fprintf(stderr, "NULLS found!\n");
 #endif
 			return 1;
@@ -517,7 +489,8 @@ static int hash_plugin_check_hash(const char *password)
 		/* </plist> is a pretty generic signature for Apple */
 		if (jtr_memmem(outbuf, cur_salt->data_size, (void*)"</plist>", 8)) {
 #ifdef DMG_DEBUG
-			dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 			fprintf(stderr, "</plist> found!\n");
 #endif
 			return 1;
@@ -526,7 +499,8 @@ static int hash_plugin_check_hash(const char *password)
 		/* Journalled HFS+ */
 		if (jtr_memmem(outbuf, cur_salt->data_size, (void*)"jrnlhfs+", 8)) {
 #ifdef DMG_DEBUG
-			dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 			fprintf(stderr, "jrnlhfs+ found!\n");
 #endif
 			return 1;
@@ -540,7 +514,8 @@ static int hash_plugin_check_hash(const char *password)
 
 			if (HTONL(*u32Version) == 4) {
 #ifdef DMG_DEBUG
-				dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 				fprintf(stderr, "koly found!\n");
 #endif
 				return 1;
@@ -550,7 +525,8 @@ static int hash_plugin_check_hash(const char *password)
 		/* Apple is a pretty good indication */
 		if (jtr_memmem(outbuf, cur_salt->data_size, (void*)"Apple", 5)) {
 #ifdef DMG_DEBUG
-			dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 			fprintf(stderr, "Apple found!\n");
 #endif
 			return 1;
@@ -559,7 +535,8 @@ static int hash_plugin_check_hash(const char *password)
 		/* Handle VileFault sample images */
 		if (jtr_memmem(outbuf, cur_salt->data_size, (void*)"EFI PART", 8)) {
 #ifdef DMG_DEBUG
-			dump_strings(outbuf, cur_salt->data_size);
+			if (!bench_running)
+				dump_text(outbuf, cur_salt->data_size);
 			fprintf(stderr, "EFI PART found!\n");
 #endif
 			return 1;
@@ -580,7 +557,8 @@ static int hash_plugin_check_hash(const char *password)
 			AES_cbc_encrypt(cur_salt->zchunk, outbuf, 4096, &aes_decrypt_key, iv, AES_DECRYPT);
 			if (jtr_memmem(outbuf, 4096, (void*)"Press any key to reboot", 23)) {
 #ifdef DMG_DEBUG
-				dump_strings(outbuf, 4096);
+				if (!bench_running)
+					dump_text(outbuf, 4096);
 				fprintf(stderr, "MS-DOS UDRW signature found!\n");
 #endif
 				return 1;
@@ -662,7 +640,7 @@ struct fmt_main fmt_dmg = {
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
 		0,
-#if DMG_DEBUG
+#ifdef DMG_DEBUG
 		FMT_NOT_EXACT |
 #endif
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
