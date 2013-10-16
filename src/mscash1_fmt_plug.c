@@ -34,7 +34,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL			"mscash"
-#define FORMAT_NAME			"M$ Cache Hash"
+#define FORMAT_NAME			"M$ Cache Hash (DCC)"
 #define ALGORITHM_NAME			"MD4 32/" ARCH_BITS_STR
 
 #define BENCHMARK_COMMENT		""
