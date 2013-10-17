@@ -54,7 +54,7 @@ static int omp_t = 1;
 #include "memdbg.h"
 
 #define FORMAT_LABEL       "krb5pa-sha1"
-#define FORMAT_NAME        "Kerberos 5 AS-REQ Pre-Auth etype 17/18 aes-cts-hmac-sha1-96"
+#define FORMAT_NAME        "Kerberos 5 AS-REQ Pre-Auth etype 17/18" /* aes-cts-hmac-sha1-96 */
 #ifdef MMX_COEF
 #define ALGORITHM_NAME      SHA1_N_STR MMX_TYPE
 #else

@@ -52,7 +52,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL		"krb5pa-sha1-opencl"
-#define FORMAT_NAME		"Kerberos 5 AS-REQ Pre-Auth etype 17/18 aes-cts-hmac-sha1-96"
+#define FORMAT_NAME		"Kerberos 5 AS-REQ Pre-Auth etype 17/18" /* aes-cts-hmac-sha1-96 */
 #define ALGORITHM_NAME		"OpenCL"
 #define BENCHMARK_COMMENT	""
 #define BENCHMARK_LENGTH	-1001

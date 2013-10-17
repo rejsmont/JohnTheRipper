@@ -61,7 +61,7 @@
 #include "memdbg.h"
 
 #define FORMAT_LABEL       "krb5pa-md5"
-#define FORMAT_NAME        "Kerberos 5 AS-REQ Pre-Auth etype 23 md4, rc4-hmac-md5"
+#define FORMAT_NAME        "Kerberos 5 AS-REQ Pre-Auth etype 23" /* md4 rc4-hmac-md5 */
 #define ALGORITHM_NAME     "32/" ARCH_BITS_STR
 #define BENCHMARK_COMMENT  ""
 #define BENCHMARK_LENGTH   -1000
