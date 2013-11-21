@@ -72,7 +72,8 @@ static unsigned int key_idx = 0;
 #define OCL_CONFIG		"raw-sha1"
 
 // Shared auto-tune stuff
-#define STEP                    (512*1024)
+#define STEP                    0
+#define SEED                    65536
 #define ROUNDS			1
 
 static const char * warn[] = {
@@ -200,21 +201,33 @@ static void done(void)
 	HANDLE_CLERROR(clReleaseProgram(program[ocl_gpu_id]), "Release Program");
 }
 
-static void init(struct fmt_main *self) {
+static void init(struct fmt_main *self)
+{
+	size_t gws_limit;
+
 	opencl_init("$JOHN/kernels/sha1_kernel.cl", ocl_gpu_id, NULL);
+
+	// Current key_idx can only hold 26 bits of offset so
+	// we can't reliably use a GWS higher than 4.7M or so.
+	gws_limit = MIN((1 << 26) * 4 / BUFSIZE,
+			get_max_mem_alloc_size(ocl_gpu_id) / BUFSIZE);
 
 	// create kernel to execute
 	crypt_kernel = clCreateKernel(program[ocl_gpu_id], "sha1_crypt_kernel", &ret_code);
 	HANDLE_CLERROR(ret_code, "Error creating kernel. Double-check kernel name?");
 
 	//Initialize openCL tuning (library) for this format.
-	opencl_init_auto_setup(STEP, 0, 4, NULL, warn, &multi_profilingEvent[2],
+	opencl_init_auto_setup(SEED, 0, 4, NULL, warn, &multi_profilingEvent[2],
 	                       self, create_clobj, release_clobj,
-	                       BUFSIZE, 0);
+	                       BUFSIZE, gws_limit);
+
+	//Limit worksize using index limitation.
+	while (global_work_size > gws_limit)
+		global_work_size -= local_work_size;
 
 	//Auto tune execution from shared/included code.
 	self->methods.crypt_all = crypt_all_benchmark;
-	common_run_auto_tune(self, ROUNDS, 0,
+	common_run_auto_tune(self, ROUNDS, gws_limit,
 		(cpu(device_info[ocl_gpu_id]) ? 500000000ULL : 1000000000ULL));
 	self->methods.crypt_all = crypt_all;
 }
