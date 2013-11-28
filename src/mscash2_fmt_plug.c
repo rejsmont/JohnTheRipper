@@ -96,7 +96,9 @@ static struct fmt_tests tests[] = {
 
 	// max length user name 128 bytes, and max length password, 125 bytes
 	{"$DCC2$10240#12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678#5ba26de44bd3a369f43a1c72fba76d45", "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"},
-// Non-standard iterations count
+	// Critical length salt
+	{"$DCC2$twentytwoXX_characters#c22936e38aac84474d9a4821b196ef5c", "password"},
+	// Non-standard iterations count
 	{"$DCC2$10000#Twelve_chars#54236c670e185043c8016006c001e982", "magnum"},
 	{NULL}
 };
@@ -270,7 +272,9 @@ char *mscash2_prepare(char *split_fields[10], struct fmt_main *self)
 {
 	char *cp;
 	int i;
-	if (!strncmp(split_fields[1], "$DCC2$", 6)) {
+
+	if (!strncmp(split_fields[1], "$DCC2$", 6) &&
+	    strchr(split_fields[1], '#') == strrchr(split_fields[1], '#')) {
 		if (valid(split_fields[1], self))
 			return split_fields[1];
 		// see if this is a form $DCC2$salt#hash.  If so, make it $DCC2$10240#salt#hash and retest (insert 10240# into the line).
@@ -313,7 +317,7 @@ static void *get_salt(char *_ciphertext)
 	unsigned char *ciphertext = (unsigned char *)_ciphertext;
 	static UTF16 out[130+1];
 	unsigned char input[128*3+1];
-	int utf16len, md4_size;
+	int iterations, utf16len, md4_size;
 
 	memset(out, 0, sizeof(out));
 
@@ -332,8 +336,8 @@ static void *get_salt(char *_ciphertext)
 	if (utf16len < 0)
 		utf16len = strlen16(&out[2]);
 	out[0] = utf16len << 1;
-	sscanf(&_ciphertext[6], "%d", &utf16len);
-	out[1] = utf16len;
+	sscanf(&_ciphertext[6], "%d", &iterations);
+	out[1] = iterations;
 	return out;
 }
 
@@ -746,7 +750,6 @@ struct fmt_main fmt_mscash2 = {
 		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
-		0,
 		FMT_CASE | FMT_8_BIT | FMT_SPLIT_UNIFIES_CASE | FMT_OMP | FMT_UNICODE | FMT_UTF8,
 		tests
 	}, {

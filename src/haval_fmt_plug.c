@@ -224,7 +224,6 @@ struct fmt_main fmt_haval_256_3 = {
 		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
-		0,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
 		haval_256_3_tests
 	}, {
@@ -282,7 +281,6 @@ struct fmt_main fmt_haval_128_4 = {
 		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
-		0,
 		FMT_CASE | FMT_8_BIT | FMT_OMP,
 		haval_128_4_tests
 	}, {
