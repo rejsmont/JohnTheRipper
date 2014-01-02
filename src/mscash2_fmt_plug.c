@@ -104,7 +104,7 @@ static struct fmt_tests tests[] = {
 };
 
 #define FORMAT_LABEL			"mscash2"
-#define FORMAT_NAME			"M$ Cache Hash 2 (DCC2)"
+#define FORMAT_NAME			"MS Cache Hash 2 (DCC2)"
 
 #define BENCHMARK_COMMENT		""
 #define BENCHMARK_LENGTH		-1

@@ -1124,6 +1124,7 @@ static void john_init(char *name, int argc, char **argv)
 
 	john_register_all(); /* maybe restricted to one format by options */
 
+	common_init();
 	if ((options.subformat && !strcasecmp(options.subformat, "list")) ||
 	    options.listconf)
 		listconf_parse_late();
@@ -1135,7 +1136,6 @@ static void john_init(char *name, int argc, char **argv)
 	ocl_gpu_id = -1;
 #endif
 
-	common_init();
 	sig_init();
 
 	john_load();
@@ -1171,6 +1171,11 @@ static void john_run(void)
 					"processor cycles only");
 		}
 		tty_init(options.flags & FLG_STDIN_CHK);
+
+		if (database.format->params.flags & FMT_NOT_EXACT)
+			fprintf(stderr, "Note: This format may emit false "
+			        "positives, so it will keep trying even "
+			        "after\nfinding a possible candidate.\n");
 
 		/* WPA-PSK and WoW both have min-length 8. Until the format
 		   struct can hold this information, we need this hack here. */
