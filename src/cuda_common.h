@@ -16,6 +16,11 @@ int cuda_gpu_id;
 #define HANDLE_ERROR(err) (HandleError(err,__FILE__,__LINE__))
 extern char *get_cuda_header_version();
 extern void cuda_init(unsigned int cuda_gpu_id);
+extern void cuda_done(void);
+#ifdef HAVE_NVML
+extern void cuda_get_temp(unsigned int cuda_gpu_id, unsigned int *temp,
+                          unsigned int *fanspeed, unsigned int *util);
+#endif
 
 #define check_mem_allocation(inbuffer,outbuffer)\
     if(inbuffer==NULL){\

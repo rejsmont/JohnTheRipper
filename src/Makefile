@@ -73,16 +73,6 @@ endif
 #HAVE_KRB5 = -DHAVE_KRB5
 #KRB5_LDFLAGS = -lk5crypto -lkrb5
 
-# CUDA settings. Instead of "-arch sm_10" you could use sm_20 or sm_30 or
-# -gencode arch=compute_10,code=sm_10 -gencode arch=compute_20,code=sm_21
-# but that leads to problems on GTX Titan.
-# You could add "-gencode arch=compute_30,code=sm_30" too but that just
-# leads to regressions for Kepler cards, when it works at all.
-NVCC_FLAGS = -c -Xptxas -v -fmad=true -arch sm_10
-CUDAPATH = /usr/local/cuda
-NVCC = PATH=$(PATH):$(CUDAPATH)/bin/ nvcc
-CCBIN_OSX = -ccbin=/usr/bin/llvm-gcc-4.2
-
 ifdef NVIDIA_CUDA
 OCLROOT = $(NVIDIA_CUDA)
 else
@@ -97,13 +87,25 @@ AMDAPP = -DAMDAPPSDK
 OCLROOT = $(ATISTREAMSDKROOT)
 endif
 
-CFLAGS = -c -Wall -Wdeclaration-after-statement -O2 -fomit-frame-pointer -I/usr/local/include $(HAVE_NSS) $(HAVE_GMP) $(HAVE_KRB5) $(OMPFLAGS) $(AMDAPP) $(JOHN_CFLAGS) $(RELEASE_BLD)
+# CUDA settings. Instead of "-arch sm_10" you could use sm_20 or sm_30 or
+# -gencode arch=compute_10,code=sm_10 -gencode arch=compute_20,code=sm_21
+# but that leads to problems on GTX Titan.
+# You could add "-gencode arch=compute_30,code=sm_30" too but that just
+# leads to regressions for Kepler cards, when it works at all.
+NVCC_FLAGS = -c -Xptxas -v -fmad=true -arch sm_10 $(HAVE_NVML)
+CUDAPATH = /usr/local/cuda
+NVCC = PATH=$(PATH):$(CUDAPATH)/bin/ nvcc
+CCBIN_OSX = -ccbin=/usr/bin/llvm-gcc-4.2
+HAVE_NVML = `find 2>&1 $(OCLROOT) $(CUDAPATH) /usr/include /usr/local/include -name "nvml.h" | grep -q "nvml.h" && echo -DHAVE_NVML`
+NVML_LDFLAGS = `find 2>&1 $(OCLROOT) $(CUDAPATH) /usr/include /usr/local/include -name "nvml.h" | grep -q "nvml.h" && echo -lnvidia-ml`
+
+CFLAGS = -c -Wall -Wdeclaration-after-statement -O2 -fomit-frame-pointer -I/usr/local/include $(HAVE_NSS) $(HAVE_GMP) $(HAVE_KRB5) $(HAVE_NVML) $(OMPFLAGS) $(AMDAPP) $(JOHN_CFLAGS) $(RELEASE_BLD)
 # -DHAVE_SKEY
 # CFLAGS for use on the main john.c file only
 CFLAGS_MAIN = $(CFLAGS)
 ASFLAGS = -c $(OMPFLAGS) $(JOHN_ASFLAGS)
 LDFLAGS = -s -L/usr/local/lib -L/usr/local/ssl/lib -lssl -lcrypto -lm -lz \
-	$(OMPFLAGS) $(NSS_LDFLAGS) $(GMP_LDFLAGS) $(KRB5_LDFLAGS) $(JOHN_LDFLAGS)
+	$(OMPFLAGS) $(NSS_LDFLAGS) $(GMP_LDFLAGS) $(KRB5_LDFLAGS) $(NVML_LDFLAGS) $(JOHN_LDFLAGS)
 # -lskey
 LDFLAGS_SOLARIS = -lrt -lnsl -lsocket -lm -lz -lcrypto -lssl
 LDFLAGS_MKV = -s -lm

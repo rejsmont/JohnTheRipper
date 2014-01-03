@@ -84,6 +84,9 @@ static int john_omp_threads_new;
 #ifdef HAVE_OPENCL
 #include "common-opencl.h"
 #endif
+#ifdef HAVE_CUDA
+#include "cuda_common.h"
+#endif
 #ifdef NO_JOHN_BLD
 #define JOHN_BLD "unk-build-type"
 #else
@@ -1290,6 +1293,10 @@ static void john_done(void)
 #ifdef HAVE_OPENCL
 	if (!(options.flags & FLG_FORK) || john_main_process)
 		opencl_done();
+#endif
+#ifdef HAVE_CUDA
+	if (!(options.flags & FLG_FORK) || john_main_process)
+		cuda_done();
 #endif
 
 	path_done();

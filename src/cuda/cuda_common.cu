@@ -8,6 +8,10 @@
 
 #include <stdio.h>
 #include <assert.h>
+#ifdef HAVE_NVML
+#include <nvml.h>
+#endif
+
 #include "cuda.h"
 #include "cuda_common.cuh"
 
@@ -51,6 +55,10 @@ static char *human_format(size_t size)
 }
 
 extern "C"
+void cuda_get_temp(unsigned int cuda_gpu_id, unsigned int *temp,
+                   unsigned int *fanspeed, unsigned int *util);
+
+extern "C"
 void cuda_device_list()
 {
 	int i, devices;
@@ -70,6 +78,9 @@ void cuda_device_list()
 	for (i = 0; i < devices; i++) {
 		cudaDeviceProp devProp;
 		int arch_sm[] = { 1, 8, 32, 192 };
+#ifdef HAVE_NVML
+		unsigned int fan, temp, util;
+#endif
 
 		cudaGetDeviceProperties(&devProp, i);
 		printf("\nCUDA Device #%d\n", i);
@@ -130,6 +141,17 @@ void cuda_device_list()
 		    devProp.maxThreadsPerMultiProcessor);
 		printf("\tPCI device topology:           %02x:%02x.%x\n",
 		    devProp.pciBusID, devProp.pciDeviceID, devProp.pciDomainID);
+#ifdef HAVE_NVML
+		nvmlInit();
+		cuda_get_temp(i, &temp, &fan, &util);
+		nvmlShutdown();
+		if (fan <= 100)
+			printf("\tFan speed:                     %d%%\n", fan);
+		if (temp < 999)
+			printf("\tGPU temp:                      %d°C\n", temp);
+		if (util <= 100)
+			printf("\tUtilization:                   %d%%\n", util);
+#endif
 		puts("");
 	}
 }
